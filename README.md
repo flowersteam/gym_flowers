@@ -1,3 +1,15 @@
+## Installation
+
+clone repository
+cd into gym_flowers
+pip install -e .
+
+Then use it as follows:
+
+import gym
+import gym_flowers
+env = gym.make('ArmBall-v0')
+
 ## List of environments
 
 * ArmBall-v0
