@@ -1,13 +1,15 @@
 from __future__ import division
-import gym2
-from gym2 import spaces
+import gym
+from gym import spaces
 import numpy as np
 import random
 import gizeh
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib as mpl
-class ModularArmV0(gym2.Env):
+
+
+class ModularArmV0(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
@@ -62,9 +64,18 @@ class ModularArmV0(gym2.Env):
         self.action_space = spaces.Box(low=-np.ones(self.n_act) / action_scaling,
                                        high=np.ones(self.n_act) / action_scaling,
                                        dtype=np.float32)
-        self.observation_space = spaces.Box(low=-np.ones(self.n_obs)*1.5,
-                                            high=np.ones(self.n_obs)*1.5,
-                                            dtype=np.float32)
+
+        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(6)*1.5,
+                                                                          high=np.ones(6)*1.5,
+                                                                          dtype='float32'),
+                                                  achieved_goal=spaces.Box(low=-np.ones(6)*1.5,
+                                                                           high=np.ones(6)*1.5,
+                                                                           dtype='float32'),
+                                                  observation=spaces.Box(low=-np.ones(self.n_obs)*1.5,
+                                                                         high=np.ones(self.n_obs)*1.5,
+                                                                         dtype='float32'),
+                                                  ))
+
 
         self.module = 0 # goal module, 0 is gripper pos, 1 is stick pos, 2 is object pos
         self.ind_goal = [[0,1], [2,3], [4,5]] # indexes of observation for each goal module
@@ -83,6 +94,7 @@ class ModularArmV0(gym2.Env):
 
 
     def reset(self, goal=None):
+        self.set_module(0)
         # We reset the simulation
         if self.random_objects:
             while True:
@@ -153,14 +165,11 @@ class ModularArmV0(gym2.Env):
         # we sample a goal module
         if self.goal_strategy == 'random':
             self.module = np.random.randint(0, 3)
-            print('Module #', self.module)
-            # self.module=2
 
     def set_module(self, module):
         # we sample a goal module
         self.module = module
-        print('Module #', self.module)
-        # self.module=2
+
 
     def step(self, action):
         """Run one timestep of the environment's dynamics.
@@ -182,19 +191,19 @@ class ModularArmV0(gym2.Env):
         else:
             self.gripper = -1
 
-        # check whether stick is grabbed
-        if not self.stick_grabbed:
-            if np.linalg.norm(self.initial_stick_pos_0-self.grip_pos, ord=2) < self.epsilon and self.gripper==-1:
-                self.stick_grabbed = True
-                self.stick_pos_0 = self.grip_pos
-
-        if self.stick_grabbed:
-            self.stick_pos = joint_3.squeeze() + self.len_stick * np.array([-np.sin(self.arm_angles[2]), np.cos(self.arm_angles[2])])
-            if not self.object_grabbed:
-                if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
-                    self.object_grabbed = True
-            if self.object_grabbed:
-                self.object_pos = self.stick_pos
+        # # check whether stick is grabbed
+        # if not self.stick_grabbed:
+        #     if np.linalg.norm(self.initial_stick_pos_0-self.grip_pos, ord=2) < self.epsilon and self.gripper==-1:
+        #         self.stick_grabbed = True
+        #         self.stick_pos_0 = self.grip_pos
+        #
+        # if self.stick_grabbed:
+        #     self.stick_pos = joint_3.squeeze() + self.len_stick * np.array([-np.sin(self.arm_angles[2]), np.cos(self.arm_angles[2])])
+        #     if not self.object_grabbed:
+        #         if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
+        #             self.object_grabbed = True
+        #     if self.object_grabbed:
+        #         self.object_pos = self.stick_pos
 
         # We update observation and reward
         self.observation = np.concatenate([self.grip_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
@@ -202,16 +211,17 @@ class ModularArmV0(gym2.Env):
         self.achieved_goal = np.zeros([6])
         self.achieved_goal[self.ind] = np.copy(self.observation[self.ind])
         self.obs = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
-        self.steps += 1
 
+        self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
 
         info = {}
-        info['is_success'] = self.compute_reward(self.achieved_goal, self.desired_goal) == 0
+        info['is_success'] = self.reward == 0
         if info['is_success']:
-            print('Success !')
-        if self.reward == 0:
-            self._done = True
-        return self.obs, self.reward, self._done, info
+            # print('Success !')
+            self.done = True
+        self.steps += 1
+
+        return self.obs, float(self.reward), self.done, info
 
     def render(self, mode='human', close=False):
         """Renders the environment.
