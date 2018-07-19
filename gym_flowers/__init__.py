@@ -15,7 +15,7 @@ register(
 
 register(
     id='ModularArm-v0',
-    entry_point='gym2.envs.home_made:ModularArmV0',
+    entry_point='gym_flowers.envs:ModularArmV0',
     max_episode_steps=75,
     reward_threshold=1.0,
 )
