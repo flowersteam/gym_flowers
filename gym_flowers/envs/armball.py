@@ -285,6 +285,63 @@ class ArmBallDense(ArmBall):
 
         ArmBall.__init__(self, sparse=False)
 
+        self.observation_space = spaces.Box(low=-np.ones(self._n_joints + 4),  # joints + position of ball + goal
+                                            high=np.ones(self._n_joints + 4),
+                                            dtype=np.float32)
+
+    def step(self, action):
+        """Run one timestep of the environment's dynamics.
+        """
+
+
+        # We compute the position of the end effector
+        self._arm_pos = np.clip(self._arm_pos + action / self._action_scaling,
+                                a_min=-np.ones(self._n_joints),
+                                a_max=np.ones(self._n_joints))
+        angles = np.cumsum(self._arm_pos)
+        angles_rads = np.pi * angles
+        self._hand_pos = np.array([np.sum(np.cos(angles_rads) * self._arm_lengths),
+                                   np.sum(np.sin(angles_rads) * self._arm_lengths)])
+
+        # We check if the object is handled and we move it.
+        if np.linalg.norm(self._hand_pos - self.achieved_goal, ord=2) < self._object_size:
+            self._object_handled = True
+        if self._object_handled:
+            self.achieved_goal = self._hand_pos
+
+        # We update observation and reward
+        self._observation = np.concatenate([self._arm_pos, self.achieved_goal, self.desired_goal])
+        self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
+        self._steps += 1
+        if self._steps == self._n_timesteps:
+           self._done = True
+
+        info = {}
+
+        return self._observation, self.reward, self._done, info
+
+
+    def reset(self, goal=None):
+        # We reset the simulation
+        if self._one_goal:
+            self.desired_goal = np.array([0.3, 0.5])
+        else:
+            if goal is not None:
+                self.desired_goal = goal
+            else:
+                self.desired_goal = self._sample_goal()
+        self.achieved_goal = self._object_initial_pos
+        self._arm_pos = np.zeros(self._arm_lengths.shape)
+        self._object_handled = False
+        self._observation = np.concatenate([self._arm_pos, self.achieved_goal, self.desired_goal])
+        self._steps = 0
+        self._done = False
+
+        # We compute the initial reward.
+        self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
+
+        return self._observation
+
 if __name__ == '__main__':
     a = ArmBall()
     a.reset()
