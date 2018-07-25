@@ -260,7 +260,7 @@ class ArmBall(gym.Env):
                 img = self._rendering
                 self._img_artist.set_data(img)
                 plt.draw()
-                plt.pause(0.003)
+                plt.pause(0.05)
 
 
     def _start_viewer(self):
