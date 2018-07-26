@@ -6,7 +6,7 @@ import random
 import gizeh
 
 
-class ArmBall(gym.Env):
+class ArmBall(gym.GoalEnv):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
@@ -42,6 +42,13 @@ class ArmBall(gym.Env):
         self.observation_space = spaces.Box(low=-np.ones(self._n_joints + 2),  # joints + position of ball
                                             high=np.ones(self._n_joints + 2),
                                             dtype=np.float32)
+        self.observation_space = spaces.Dict(dict(
+            desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
+            achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
+            observation=spaces.Box(low=-np.ones(self._n_joints + 2),  # joints + position of ball
+                                   high=np.ones(self._n_joints + 2),
+                                   dtype=np.float32),
+        ))
 
         self._env_noise = env_noise
         if render:
@@ -82,6 +89,13 @@ class ArmBall(gym.Env):
         else:
             return -d
 
+    def sparse_reward(self, achieved_goal, goal):
+        if achieved_goal.ndim > 1:
+            d = np.linalg.norm(achieved_goal - goal, ord=2, axis=1)
+        else:
+            d = np.linalg.norm(achieved_goal - goal, ord=2)
+        return -(d > self._epsilon).astype(np.int)
+
     def step(self, action):
         """Run one timestep of the environment's dynamics.
         """
@@ -107,14 +121,12 @@ class ArmBall(gym.Env):
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
         self._steps += 1
         if self._steps == self._n_timesteps:
-           self._done = True
-
+            self._done = True
 
         self.obs = dict(observation=self._observation, desired_goal=self.desired_goal, achieved_goal=self.achieved_goal)
 
         info = {}
-        if self._sparse:
-            info['is_success'] = self.compute_reward(self.achieved_goal, self.desired_goal) == 0
+        info['is_success'] = self.sparse_reward(self.achieved_goal, self.desired_goal) == 0
 
         return self.obs, self.reward, self._done, info
 
@@ -142,7 +154,6 @@ class ArmBall(gym.Env):
 
         return self.obs
 
-
     def render(self, mode='human', close=False):
         """Renders the environment.
 
@@ -162,13 +173,9 @@ class ArmBall(gym.Env):
             close (bool): close all open renderings
         """
 
-
-
-        assert len(self._observation) == len(self._arm_lengths) + 2
-
         # We retrieve arm and object pose
-        arm_pos = self._observation[:-2]
-        object_pos = self._observation[-2:]
+        arm_pos = self._arm_pos
+        object_pos = self.achieved_goal
 
         # World parameters
         world_size = 2.
@@ -317,6 +324,7 @@ class ArmBallDense(ArmBall):
            self._done = True
 
         info = {}
+        info['is_success'] = self.sparse_reward(self.achieved_goal, self.desired_goal) == 0
 
         return self._observation, self.reward, self._done, info
 
