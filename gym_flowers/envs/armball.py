@@ -14,7 +14,20 @@ class ArmBall(gym.GoalEnv):
 
     def __init__(self, object_initial_pos=np.array([0.6, 0.6]),
                  arm_lengths=np.array([0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05]), object_size=0.1, n_timesteps=50,
-                 render=True, epsilon=0.05, action_scaling=10, sparse=True, one_goal=False, env_noise=0, **kwargs):
+                 epsilon=0.05, action_scaling=10, reward_type='sparse', one_goal=False, env_noise=0):
+        """Initializes a new ArmBall environment.
+
+                Args:
+                    object_initial_pos (np_array): initial pose for the ball
+                    arm_lengths (np_array): lengths of the robotic arm between each joint
+                    object_size (float): ball size, maximum distance to catch the ball
+                    n_timesteps (int): maximum number of timesteps in the environment before reset
+                    epsilon (float): the threshold after which a goal is considered achieved
+                    action_scaling (float): the scaling for action (actions are between -1 and 1 before scaling)
+                    one_goal (np_array): if True then the goal is always the same (useful for debug and test)
+                    env_noise (float): amount of gaussian noise for rendering
+                    reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
+        """
 
         assert arm_lengths.size < 8, "The number of joints must be inferior to 8"
         assert arm_lengths.sum() == 1., "The arm length must sum to 1."
@@ -30,7 +43,7 @@ class ArmBall(gym.GoalEnv):
         self._object_handled = False
         self.desired_goal = None  # goal position
         self._n_timesteps = n_timesteps
-        self._sparse = sparse  # sparse reward if True, dense if False
+        self.reward_type = reward_type
         self._epsilon = epsilon  # precision for sparse reward
         self._one_goal = one_goal
         self._action_scaling = action_scaling
@@ -51,16 +64,15 @@ class ArmBall(gym.GoalEnv):
         ))
 
         self._env_noise = env_noise
-        if render:
-            self._width = 500
-            self._height = 500
-            self._rendering = np.zeros([self._height, self._width, 3])
-            self._rendering[0] = 1
-            self._render_arm = True
-            self._render_goal = True
-            self._render_obj = True
-            self._render_hand = True
-            self._rgb = True
+        self._width = 500
+        self._height = 500
+        self._rendering = np.zeros([self._height, self._width, 3])
+        self._rendering[0] = 1
+        self._render_arm = True
+        self._render_goal = True
+        self._render_obj = True
+        self._render_hand = True
+        self._rgb = True
 
         self.viewer = None
 
@@ -84,12 +96,12 @@ class ArmBall(gym.GoalEnv):
             d = np.linalg.norm(achieved_goal - goal, ord=2, axis=1)
         else:
             d = np.linalg.norm(achieved_goal - goal, ord=2)
-        if self._sparse:
+        if self.reward_type == 'sparse':
             return -(d > self._epsilon).astype(np.int)
         else:
             return -d
 
-    def sparse_reward(self, achieved_goal, goal):
+    def _is_success(self, achieved_goal, goal):
         if achieved_goal.ndim > 1:
             d = np.linalg.norm(achieved_goal - goal, ord=2, axis=1)
         else:
@@ -99,7 +111,6 @@ class ArmBall(gym.GoalEnv):
     def step(self, action):
         """Run one timestep of the environment's dynamics.
         """
-
 
         # We compute the position of the end effector
         self._arm_pos = np.clip(self._arm_pos + action / self._action_scaling,
@@ -126,7 +137,7 @@ class ArmBall(gym.GoalEnv):
         self.obs = dict(observation=self._observation, desired_goal=self.desired_goal, achieved_goal=self.achieved_goal)
 
         info = {}
-        info['is_success'] = self.sparse_reward(self.achieved_goal, self.desired_goal) == 0
+        info['is_success'] = self._is_success(self.achieved_goal, self.desired_goal) == 0
 
         return self.obs, self.reward, self._done, info
 
@@ -300,7 +311,6 @@ class ArmBallDense(ArmBall):
         """Run one timestep of the environment's dynamics.
         """
 
-
         # We compute the position of the end effector
         self._arm_pos = np.clip(self._arm_pos + action / self._action_scaling,
                                 a_min=-np.ones(self._n_joints),
@@ -324,7 +334,7 @@ class ArmBallDense(ArmBall):
            self._done = True
 
         info = {}
-        info['is_success'] = self.sparse_reward(self.achieved_goal, self.desired_goal) == 0
+        info['is_success'] = self._is_success(self.achieved_goal, self.desired_goal) == 0
 
         return self._observation, self.reward, self._done, info
 
