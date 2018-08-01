@@ -307,12 +307,17 @@ class ArmBalls(gym.GoalEnv):
                  object_initial_pos=np.array([0.6, 0.6]), object_size=0.1,
                  distract_initial_pose=np.array([0.7, -0.45]), distract_size=0.15, distract_noise=0.2, n_timesteps=50,
                  epsilon=0.05, action_scaling=10, reward_type='sparse', one_goal=False, env_noise=0):
-        """Initializes a new ArmBall environment.
+        """Initializes a new ArmBalls environment.
+
+            This environment is similar to ArmBall except that there is a another ball (distractor) that cannot be
+            controlled and moves randomly in the scene.
 
                 Args:
-                    object_initial_pos (np_array): initial pose for the ball
                     arm_lengths (np_array): lengths of the robotic arm between each joint
+                    object_initial_pos (np_array): initial pose for the ball
                     object_size (float): ball size, maximum distance to catch the ball
+                    distrack_initial_pos (np_array): initial pose for the distractor
+                    distrack_size (float): distractor size (impacts only rendering)
                     n_timesteps (int): maximum number of timesteps in the environment before reset
                     epsilon (float): the threshold after which a goal is considered achieved
                     action_scaling (float): the scaling for action (actions are between -1 and 1 before scaling)
