@@ -52,9 +52,6 @@ class ArmBall(gym.GoalEnv):
         self.action_space = spaces.Box(low=-np.ones(self._n_joints),
                                        high=np.ones(self._n_joints),
                                        dtype=np.float32)
-        self.observation_space = spaces.Box(low=-np.ones(self._n_joints + 2),  # joints + position of ball
-                                            high=np.ones(self._n_joints + 2),
-                                            dtype=np.float32)
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
             achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
@@ -352,14 +349,11 @@ class ArmBalls(gym.GoalEnv):
         self.action_space = spaces.Box(low=-np.ones(self._n_joints),
                                        high=np.ones(self._n_joints),
                                        dtype=np.float32)
-        self.observation_space = spaces.Box(low=-np.ones(self._n_joints + 2),  # joints + position of ball
-                                            high=np.ones(self._n_joints + 2),
-                                            dtype=np.float32)
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
             achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
-            observation=spaces.Box(low=-np.ones(self._n_joints + 2),  # joints + position of ball
-                                   high=np.ones(self._n_joints + 2),
+            observation=spaces.Box(low=-np.ones(self._n_joints + 4),  # joints + position of ball and distractor
+                                   high=np.ones(self._n_joints + 4),
                                    dtype=np.float32),
         ))
 
@@ -454,7 +448,7 @@ class ArmBalls(gym.GoalEnv):
         self._actual_distract_pose = self._distract_initial_pose.copy()
         self._arm_pos = np.zeros(self._arm_lengths.shape)
         self._object_handled = False
-        self._observation = np.concatenate([self._arm_pos, self.achieved_goal])
+        self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         self._steps = 0
         self._done = False
 
