@@ -35,3 +35,10 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=50,
     )
+
+    register(
+            id='ArmBalls{}-v0'.format(suffix),
+            entry_point='gym_flowers.envs:ArmBalls',
+            kwargs=kwargs,
+            max_episode_steps=50,
+    )
