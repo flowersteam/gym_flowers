@@ -88,7 +88,6 @@ class ModularArmV0(gym.Env):
         self.done = None
         self.desired_goal = None
         self.achieved_goal = None
-        self.module = 0
         self.n_modules = 3
 
 
