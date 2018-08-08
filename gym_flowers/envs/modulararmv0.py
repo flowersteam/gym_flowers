@@ -76,7 +76,7 @@ class ModularArmV0(gym.Env):
                                                   ))
 
 
-        self.module = 2 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
+        self.module = 1 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
         self.ind_goal = [[0,1], [2,3], [4,5]] # indexes of observation for each goal module
         self.epsilon = epsilon_grasping # precision to decide whether a goal is fulfilled or not
 
