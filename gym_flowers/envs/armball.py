@@ -303,7 +303,7 @@ class ArmBalls(gym.GoalEnv):
     def __init__(self, arm_lengths=np.array([0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05]),
                  object_initial_pos=np.array([0.6, 0.6]), object_size=0.1,
                  distract_initial_pose=np.array([0.7, -0.45]), distract_size=0.15, distract_noise=0.2, n_timesteps=50,
-                 epsilon=0.05, action_scaling=10, reward_type='sparse', one_goal=False, env_noise=0):
+                 epsilon=0.05, action_scaling=10, reward_type='sparse', one_goal=False, env_noise=0, obs_type='xyz'):
         """Initializes a new ArmBalls environment.
 
             This environment is similar to ArmBall except that there is a another ball (distractor) that cannot be
@@ -318,9 +318,11 @@ class ArmBalls(gym.GoalEnv):
                     n_timesteps (int): maximum number of timesteps in the environment before reset
                     epsilon (float): the threshold after which a goal is considered achieved
                     action_scaling (float): the scaling for action (actions are between -1 and 1 before scaling)
-                    one_goal (np_array): if True then the goal is always the same (useful for debug and test)
                     env_noise (float): amount of gaussian noise for rendering
+                    one_goal (np_array): if True then the goal is always the same (useful for debug and test)
                     reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
+                    obs_type ('xyz', 'rgb', 'vae' or 'betavae'): the type of observation type, i.e. coordinates, images
+                        or entangled/disentangled latent representation
         """
 
         assert arm_lengths.size < 8, "The number of joints must be inferior to 8"
@@ -344,18 +346,44 @@ class ArmBalls(gym.GoalEnv):
         self._epsilon = epsilon  # precision for sparse reward
         self._one_goal = one_goal
         self._action_scaling = action_scaling
+        self._obs_type = obs_type
 
         # We set the space
         self.action_space = spaces.Box(low=-np.ones(self._n_joints),
                                        high=np.ones(self._n_joints),
                                        dtype=np.float32)
-        self.observation_space = spaces.Dict(dict(
-            desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
-            achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
-            observation=spaces.Box(low=-np.ones(self._n_joints + 4),  # joints + position of ball and distractor
-                                   high=np.ones(self._n_joints + 4),
-                                   dtype=np.float32),
-        ))
+        if self._obs_type == 'xyz':
+            observation = spaces.Box(low=-np.ones(self._n_joints + 4),  # joints + position of ball and distractor
+                                     high=np.ones(self._n_joints + 4),
+                                     dtype=np.float32)
+        elif self._obs_type == 'rgb':
+            observation = spaces.Box(low=0, high=1, shape=(64, 64, 3), dtype=np.float32)  # 64 * 64 image
+
+            self.observation_space = spaces.Dict(dict(
+                desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
+                achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
+                observation=observation,
+            ))
+        elif self._obs_type == 'vae':
+            from latentgoalexplo.representation.representation_pytorch import ArmBallsVAE
+            self.ArmBallsVAE = ArmBallsVAE
+            observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
+
+            self.observation_space = spaces.Dict(dict(
+                    desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
+                    achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
+                    observation=observation,
+            ))
+        elif self._obs_type == 'betavae':
+            from latentgoalexplo.representation.representation_pytorch import ArmBallsBetaVAE
+            self.ArmBallsBetaVAE = ArmBallsBetaVAE
+            observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
+
+            self.observation_space = spaces.Dict(dict(
+                    desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
+                    achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
+                    observation=observation,
+            ))
 
         self._env_noise = env_noise
         self._width = 500
@@ -421,7 +449,20 @@ class ArmBalls(gym.GoalEnv):
         self._actual_distract_pose = np.clip(self._actual_distract_pose, -.95, 0.95)
 
         # We update observation and reward
-        self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
+        if self._obs_type == 'xyz':
+            self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
+        elif self._obs_type == 'rgb':
+            self._calc_rendering(width=64, height=64)
+            self._observation = self._rendering
+        elif self._obs_type == 'vae':
+            self._calc_rendering(width=64, height=64)
+            self.ArmBallsVAE.act(X_pred=self._rendering)
+            self._observation = self.ArmBallsVAE.representation.squeeze()
+        elif self._obs_type == 'betavae':
+            self._calc_rendering(width=64, height=64)
+            self.ArmBallsBetaVAE.act(X_pred=self._rendering)
+            self._observation = self.ArmBallsBetaVAE.representation.squeeze()
+
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
         self._steps += 1
         if self._steps == self._n_timesteps:
@@ -433,7 +474,6 @@ class ArmBalls(gym.GoalEnv):
         info['is_success'] = self._is_success(self.achieved_goal, self.desired_goal) == 0
 
         return self.obs, self.reward, self._done, info
-
 
     def reset(self, goal=None):
         # We reset the simulation
@@ -448,9 +488,22 @@ class ArmBalls(gym.GoalEnv):
         self._actual_distract_pose = self._distract_initial_pose.copy()
         self._arm_pos = np.zeros(self._arm_lengths.shape)
         self._object_handled = False
-        self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         self._steps = 0
         self._done = False
+
+        if self._obs_type == 'xyz':
+            self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
+        elif self._obs_type == 'rgb':
+            self._calc_rendering(width=64, height=64)
+            self._observation = self._rendering
+        elif self._obs_type == 'vae':
+            self._calc_rendering(width=64, height=64)
+            self.ArmBallsVAE.act(X_pred=self._rendering)
+            self._observation = self.ArmBallsVAE.representation.squeeze()
+        elif self._obs_type == 'betavae':
+            self._calc_rendering(width=64, height=64)
+            self.ArmBallsBetaVAE.act(X_pred=self._rendering)
+            self._observation = self.ArmBallsBetaVAE.representation.squeeze()
 
         # We compute the initial reward.
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
@@ -459,25 +512,7 @@ class ArmBalls(gym.GoalEnv):
 
         return self.obs
 
-    def render(self, mode='human', close=False):
-        """Renders the environment.
-
-        - human: render to the current display or terminal and
-          return nothing. Usually for human consumption.
-        - rgb_array: Return an numpy.ndarray with shape (x, y, 3),
-          representing RGB values for an x-by-y pixel image, suitable
-          for turning into a video.
-
-        Note:
-            Make sure that your class's metadata 'render.modes' key includes
-              the list of supported modes. It's recommended to call super()
-              in implementations to use the functionality of this method.
-
-        Args:
-            mode (str): the mode to render with
-            close (bool): close all open renderings
-        """
-
+    def _calc_rendering(self, width, height):
         # We retrieve arm and object pose
         arm_pos = self._arm_pos
         object_pos = self.achieved_goal
@@ -493,17 +528,17 @@ class ArmBalls(gym.GoalEnv):
                              np.sum(np.sin(arm_angles) * self._arm_lengths)])
 
         # Screen parameters
-        screen_center_w = np.ceil(self._width / 2)
-        screen_center_h = np.ceil(self._height / 2)
+        screen_center_w = np.ceil(width / 2)
+        screen_center_h = np.ceil(height / 2)
 
         # Ratios
-        world2screen = min(self._width / world_size, self._height / world_size)
+        world2screen = min(width / world_size, height / world_size)
 
         # Instantiating surface
-        surface = gizeh.Surface(width=self._width, height=self._height)
+        surface = gizeh.Surface(width=width, height=height)
 
         # Drawing Background
-        background = gizeh.rectangle(lx=self._width, ly=self._height,
+        background = gizeh.rectangle(lx=width, ly=height,
                                      xy=(screen_center_w, screen_center_h), fill=(1, 1, 1))
         background.draw(surface)
 
@@ -550,6 +585,26 @@ class ArmBalls(gym.GoalEnv):
             self._rendering -= self._rendering.min()
             self._rendering /= self._rendering.max()
 
+    def render(self, mode='human', close=False):
+        """Renders the environment.
+
+        - human: render to the current display or terminal and
+          return nothing. Usually for human consumption.
+        - rgb_array: Return an numpy.ndarray with shape (x, y, 3),
+          representing RGB values for an x-by-y pixel image, suitable
+          for turning into a video.
+
+        Note:
+            Make sure that your class's metadata 'render.modes' key includes
+              the list of supported modes. It's recommended to call super()
+              in implementations to use the functionality of this method.
+
+        Args:
+            mode (str): the mode to render with
+            close (bool): close all open renderings
+        """
+
+        self._calc_rendering(width=self._width, height=self._height)
         if mode == 'rgb_array':
             return self._rendering  # return RGB frame suitable for video
         elif mode is 'human':
