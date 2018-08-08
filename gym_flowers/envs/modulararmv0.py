@@ -17,7 +17,7 @@ class ModularArmV0(gym.Env):
                  size=(3,3), # environment size
                  initial_angles=(0.,0.,0.), # initial angular position of the arm's joints
                  obj=(-0.3, 1.1), # object location (square)
-                 stick=(-0.75,0.25), # stick location
+                 stick=(1,0),#(-0.75,0.25), # stick location
                  len_stick=0.5, # stick length
                  len_arm=(0.5,0.3,0.2), # length of the arm parts
                  action_scaling=10, # action are in +/- 180/action_scaling
@@ -110,7 +110,6 @@ class ModularArmV0(gym.Env):
         self.stick_pos = np.copy(self.initial_stick_pos)
         self.stick_pos_0 = np.copy(self.initial_stick_pos_0)
         self.object_pos = np.copy(self.initial_obj_pos)
-        self.arm_angles = np.copy(self.initial_angles)
 
         self.gripper = -1 #open
         self.stick_grabbed = False
@@ -118,12 +117,26 @@ class ModularArmV0(gym.Env):
         self.reward = 0
 
         # Initialize angular arm_pos and compute gripper cartesian position
-        self.arm_pos = np.random.uniform(-0.1,0.1,3)
+        self.arm_pos = np.zeros([3]) #np.random.uniform(-0.1,0.1,3)
         angles = np.cumsum(self.arm_pos)
         angles_rads = np.pi * angles
         self.grip_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
                                   np.sum(np.sin(angles_rads) * self.len_arm)])
-        
+
+        # check whether stick is grabbed
+        if not self.stick_grabbed:
+            if np.linalg.norm(self.initial_stick_pos_0 - self.grip_pos, ord=2) < self.epsilon and self.gripper == -1:
+                self.stick_grabbed = True
+                self.stick_pos_0 = self.grip_pos
+
+        if self.stick_grabbed:
+            self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
+            if not self.object_grabbed:
+                if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
+                    self.object_grabbed = True
+            if self.object_grabbed:
+                self.object_pos = self.stick_pos
+                
         # construct vector of observations
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
 
@@ -181,7 +194,7 @@ class ModularArmV0(gym.Env):
     def step(self, action):
         """Run one timestep of the environment's dynamics.
         """
-
+        action = np.copy(action.clip(-1,1))
         grip = np.copy(action[-1])
         
         # We compute the position of the end effector
@@ -198,19 +211,19 @@ class ModularArmV0(gym.Env):
         else:
             self.gripper = -1
 
-        # # check whether stick is grabbed
-        # if not self.stick_grabbed:
-        #     if np.linalg.norm(self.initial_stick_pos_0-self.grip_pos, ord=2) < self.epsilon and self.gripper==-1:
-        #         self.stick_grabbed = True
-        #         self.stick_pos_0 = self.grip_pos
-        #
-        # if self.stick_grabbed:
-        #     self.stick_pos = joint_3.squeeze() + self.len_stick * np.array([-np.sin(self.arm_angles[2]), np.cos(self.arm_angles[2])])
-        #     if not self.object_grabbed:
-        #         if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
-        #             self.object_grabbed = True
-        #     if self.object_grabbed:
-        #         self.object_pos = self.stick_pos
+        # check whether stick is grabbed
+        if not self.stick_grabbed:
+            if np.linalg.norm(self.initial_stick_pos_0-self.grip_pos, ord=2) < self.epsilon and self.gripper==-1:
+                self.stick_grabbed = True
+                self.stick_pos_0 = self.grip_pos
+
+        if self.stick_grabbed:
+            self.stick_pos = np.copy(self.grip_pos + self.len_stick * np.array([np.cos(angles_rads[-1]), np.sin(angles_rads[-1])]))
+            if not self.object_grabbed:
+                if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
+                    self.object_grabbed = True
+            if self.object_grabbed:
+                self.object_pos = self.stick_pos
 
         # We update observation and reward
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
@@ -319,7 +332,7 @@ class ModularArmV0(gym.Env):
         if mode == 'rgb_array':
             return self.rendering  # return RGB frame suitable for video
         elif mode is 'human':
-            plt.gca().invert_yaxis()
+            # plt.gca().invert_yaxis()
             plt.pause(0.01)
             plt.draw()
 
