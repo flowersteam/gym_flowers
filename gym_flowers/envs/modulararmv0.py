@@ -16,8 +16,8 @@ class ModularArmV0(gym.Env):
     def __init__(self,
                  size=(3,3), # environment size
                  initial_angles=(0.,0.,0.), # initial angular position of the arm's joints
-                 obj=(-0.3, 1.1), # object location (square)
-                 stick=(1,0),#(-0.75,0.25), # stick location
+                 obj=(-0.5, 1.1), # object location (square)
+                 stick=(0.75,0.75), # stick location
                  len_stick=0.5, # stick length
                  len_arm=(0.5,0.3,0.2), # length of the arm parts
                  action_scaling=10, # action are in +/- 180/action_scaling
