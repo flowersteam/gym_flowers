@@ -17,7 +17,7 @@ class ModularArmV0(gym.Env):
                  size=(3,3), # environment size
                  initial_angles=(0.,0.,0.), # initial angular position of the arm's joints
                  obj=(-0.5, 1.1), # object location (square)
-                 stick=(0.75,0.75), # stick location
+                 stick=(0.6,0.6), # stick location
                  len_stick=0.5, # stick length
                  len_arm=(0.5,0.3,0.2), # length of the arm parts
                  action_scaling=10, # action are in +/- 180/action_scaling
@@ -76,7 +76,7 @@ class ModularArmV0(gym.Env):
                                                   ))
 
 
-        self.module = 2 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
+        self.module = 1 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
         self.ind_goal = [[0,1], [3,4], [5,6]] # indexes of observation for each goal module
         self.epsilon = epsilon_grasping # precision to decide whether a goal is fulfilled or not
 
@@ -92,7 +92,6 @@ class ModularArmV0(gym.Env):
 
 
     def reset(self, goal=None):
-        self.set_module(0)
         # We reset the simulation
         if self.random_objects:
             while True:
@@ -146,9 +145,9 @@ class ModularArmV0(gym.Env):
         self.achieved_goal = np.zeros([6])
         self.desired_goal[self.module*2: 2*(self.module+1)] = self._sample_goal()
         if self.module == 0:
-            self.achieved_goal[self.ind] = self.grip_pos
+            self.achieved_goal[self.module*2: 2*(self.module+1)] = self.grip_pos
         else:
-            self.achieved_goal[self.ind] = np.copy(self.observation[self.ind])
+            self.achieved_goal[self.module*2: 2*(self.module+1)] = np.copy(self.observation[self.ind])
         self.obs = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
         self.steps = 0
         self.done = False
@@ -229,9 +228,9 @@ class ModularArmV0(gym.Env):
 
         self.achieved_goal = np.zeros([6])
         if self.module == 0:
-            self.achieved_goal[self.ind] = self.grip_pos
+            self.achieved_goal[self.module*2: 2*(self.module+1)] = self.grip_pos
         else:
-            self.achieved_goal[self.ind] = np.copy(self.observation[self.ind])
+            self.achieved_goal[self.module*2: 2*(self.module+1)] = np.copy(self.observation[self.ind])
         self.obs = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
 
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
@@ -301,7 +300,7 @@ class ModularArmV0(gym.Env):
         plt.gca().add_patch(j)
 
         # draw goal
-        j = mpl.patches.Circle(tuple(self.desired_goal[self.ind]), radius=self.epsilon, fc=(1, 0, 0), zorder=2)
+        j = mpl.patches.Circle(tuple(self.desired_goal[self.module*2: 2*(self.module+1)]), radius=self.epsilon, fc=(1, 0, 0), zorder=2)
         plt.gca().add_patch(j)
 
         # draw stick
