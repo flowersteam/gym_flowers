@@ -77,7 +77,7 @@ class ModularArmV0(gym.Env):
 
 
         self.module = 1 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
-        self.ind_goal = [[0,1], [2,3], [4,5]] # indexes of observation for each goal module
+        self.ind_goal = [[0,1], [3,4], [5,6]] # indexes of observation for each goal module
         self.epsilon = epsilon_grasping # precision to decide whether a goal is fulfilled or not
 
         self.viewer = None
@@ -145,7 +145,7 @@ class ModularArmV0(gym.Env):
         # Sample desired_goal and fill achieved_goal depending on goal module
         self.desired_goal = np.zeros([6])
         self.achieved_goal = np.zeros([6])
-        self.desired_goal[self.ind] = self._sample_goal()
+        self.desired_goal[self.module*2: 2*(self.module+1)] = self._sample_goal()
         if self.module == 0:
             self.achieved_goal[self.ind] = self.grip_pos
         else:
