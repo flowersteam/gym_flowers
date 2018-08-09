@@ -24,36 +24,25 @@ class ModularArmV0(gym.Env):
                  goal_strategy='random', # strategy for goal selection
                  epsilon_grasping=0.1, # precision for goal reach
                  n_timesteps=75, # number of timesteps
-                 random_objects=False # whether objects are located at random
+                 random_objects=True, # whether objects are located at random
+                 modules = [0]
                  ):
-        
+
+        self.modules = modules # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
+
         self.random_objects = random_objects
         self.action_scaling = action_scaling
         self.goal_strategy = goal_strategy
-        self.n_act = 4
-        self.n_obs = 10 #3 angular position of arm, stick end, object, stick beginning and gripper open or not
         self._n_timesteps = n_timesteps
-        self.initial_angles = np.random.random(3)*0.1
-
-        # determine location of objects (stick and object (square))
-        if self.random_objects:
-            while True:
-                self.initial_stick_pos_0 = (np.random.random(2)-0.5)*2
-                if self.initial_stick_pos_0[0]**1 + self.initial_stick_pos_0[1]**2 < 1:
-                    break
-            while True:
-                self.initial_obj_pos = (np.random.random(2)-0.5)*2
-                if self.initial_obj_pos[0]**1 + self.initial_obj_pos[1]**2 < 1:
-                    break
-        else:
-            self.initial_stick_pos_0 = np.array(stick)
-            self.initial_obj_pos = np.array(obj)
-            
-        self.initial_stick_pos = np.array([self.initial_stick_pos_0[0] - len_stick * np.sin(np.pi / 4),
-                                           self.initial_stick_pos_0[1] + len_stick * np.cos(np.pi / 4)])
-        self.initial_grip_pos = np.array([np.dot(-np.sin(initial_angles), len_arm).sum(),np.dot(np.cos(initial_angles), len_arm).sum()])
         self.len_arm = np.array(len_arm)
         self.len_stick = len_stick
+
+        self.default_stick_pos_0 = np.array(stick)
+        self.default_obj_pos = np.array(obj)
+
+        self.n_act = 4
+        self.n_obs = 10 #3 angular position of arm, stick end, object, stick beginning and gripper open or not
+
         self.gripper = -1 # open
         self.stick_grabbed = False
         self.object_grabbed = False
@@ -76,8 +65,6 @@ class ModularArmV0(gym.Env):
                                                   ))
 
 
-        self.module = 2 # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
-        self.ind_goal = [[0,1], [3,4], [5,6]] # indexes of observation for each goal module
         self.epsilon = epsilon_grasping # precision to decide whether a goal is fulfilled or not
 
         self.viewer = None
@@ -90,87 +77,25 @@ class ModularArmV0(gym.Env):
         self.achieved_goal = None
         self.n_modules = 3
 
-
-    def reset(self, goal=None):
-        # We reset the simulation
-        if self.random_objects:
-            while True:
-                self.initial_stick_pos_0 = (np.random.random(2)-0.5)*2
-                if self.initial_stick_pos_0[0]**1 + self.initial_stick_pos_0[1]**2 < 1:
-                    break
-            while True:
-                self.initial_obj_pos = (np.random.random(2)-0.5)*2
-                if self.initial_obj_pos[0]**1 + self.initial_obj_pos[1]**2 < 1:
-                    break
-        self.initial_stick_pos = np.array([self.initial_stick_pos_0[0] - self.len_stick * np.sin(np.pi / 4),
-                                           self.initial_stick_pos_0[1] + self.len_stick * np.cos(np.pi / 4)])
-
-        self.stick_pos = np.copy(self.initial_stick_pos)
-        self.stick_pos_0 = np.copy(self.initial_stick_pos_0)
-        self.object_pos = np.copy(self.initial_obj_pos)
-
-        self.gripper = -1 #open
-        self.stick_grabbed = False
-        self.object_grabbed = False
-        self.reward = 0
-
-        # Initialize angular arm_pos and compute gripper cartesian position
-        self.arm_pos = np.zeros([3]) #np.random.uniform(-0.1,0.1,3)
-        angles = np.cumsum(self.arm_pos)
-        angles_rads = np.pi * angles
-        self.grip_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
-                                  np.sum(np.sin(angles_rads) * self.len_arm)])
-
-        # check whether stick is grabbed
-        if not self.stick_grabbed:
-            if np.linalg.norm(self.initial_stick_pos_0 - self.grip_pos, ord=2) < self.epsilon and self.gripper == -1:
-                self.stick_grabbed = True
-                self.stick_pos_0 = self.grip_pos
-
-        if self.stick_grabbed:
-            self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
-            if not self.object_grabbed:
-                if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
-                    self.object_grabbed = True
-            if self.object_grabbed:
-                self.object_pos = self.stick_pos
-                
-        # construct vector of observations
-        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
-
-        self.ind = self.ind_goal[self.module]
-        
-        # Sample desired_goal and fill achieved_goal depending on goal module
-        self.desired_goal = np.zeros([6])
-        self.achieved_goal = np.zeros([6])
-        self.desired_goal[self.module*2: 2*(self.module+1)] = self._sample_goal()
-        if self.module == 0:
-            self.achieved_goal[self.module*2: 2*(self.module+1)] = self.grip_pos
-        else:
-            self.achieved_goal[self.module*2: 2*(self.module+1)] = np.copy(self.observation[self.ind])
-        self.obs = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
-        self.steps = 0
-        self.done = False
-
-        return self.obs
-
     def seed(self, seed):
         random.seed(seed)
         np.random.seed(seed)
         return seed
 
-    def _sample_goal(self):
+    def _sample_goal(self, module):
+        desired_goal = np.zeros([6])
         if self.module == 0:
             while True:
-                goal = (np.random.random(2)-0.5)*2
-                if goal[0]**2 + goal[1]**2 < 1:
+                goal = (np.random.random(2) - 0.5) * 2
+                if goal[0] ** 2 + goal[1] ** 2 < 1:
                     break
-        elif self.module == 2 or self.module==1:
+        elif self.module == 2 or self.module == 1:
             while True:
-                goal = (np.random.random(2)-0.5)*3
-                if goal[0]**2 + goal[1]**2 < 1.5**2:
+                goal = (np.random.random(2) - 0.5) * 3
+                if goal[0] ** 2 + goal[1] ** 2 < 1.5 ** 2:
                     break
-        return goal
+        desired_goal[module * 2: 2 * (module + 1)] = goal
+        return desired_goal
 
     def compute_reward(self, achieved_goal, goal, info=None):
         if achieved_goal.ndim > 1:
@@ -182,11 +107,84 @@ class ModularArmV0(gym.Env):
     def sample_module(self):
         # we sample a goal module
         if self.goal_strategy == 'random':
-            self.module = np.random.randint(0, 3)
+            self.module = np.random.choice(self.modules)
 
-    def set_module(self, module):
-        # we sample a goal module
-        self.module = module
+    def compute_achieved_goal(self, obs, module):
+        achieved_goal = np.zeros([6])
+        if module == 0:
+            # grip position is the achieved goal
+            angles = np.cumsum(obs[:3])
+            angles_rads = np.pi * angles
+            achieved_goal[:2] = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
+                                         np.sum(np.sin(angles_rads) * self.len_arm)])
+        elif module == 1:
+            # end_stick_pos is the achieved goal
+            achieved_goal[2:4] = obs[3:5]
+        elif module == 2:
+            # obj_pos is the achieved goal
+            achieved_goal[4:6] = obs[5:7]
+
+        return achieved_goal
+
+
+    def reset(self):
+        self.sample_module()
+        # We reset the simulation
+        if self.random_objects:
+            while True:
+                self.stick_pos_0 = (np.random.uniform(-1, 1, 2))
+                if self.stick_pos_0[0]**1 + self.stick_pos_0[1]**2 < 1:
+                    break
+            while True:
+                self.object_pos = (np.random.uniform(-1.5, 1.5, 2))
+                if self.object_pos[0]**1 + self.object_pos[1]**2 < 1.5**2:
+                    break
+        else:
+            self.stick_pos_0 = np.copy(self.default_stick_pos_0)
+            self.object_pos = np.copy(self.default_obj_pos)
+
+        self.stick_pos = np.array([self.stick_pos_0[0] - self.len_stick * np.sin(np.pi / 4),
+                                   self.stick_pos_0[1] + self.len_stick * np.cos(np.pi / 4)])
+
+        self.gripper = -1 #open
+        self.stick_grabbed = False
+        self.object_grabbed = False
+        self.reward = 0
+
+        # Initialize angular arm_pos and compute gripper cartesian position
+        self.arm_pos = np.random.uniform(-0.1,0.1,3)
+        angles = np.cumsum(self.arm_pos)
+        angles_rads = np.pi * angles
+        self.grip_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
+                                  np.sum(np.sin(angles_rads) * self.len_arm)])
+
+        # check whether stick is grabbed
+        if not self.stick_grabbed:
+            if np.linalg.norm(self.stick_pos_0 - self.grip_pos, ord=2) < self.epsilon and self.gripper == -1:
+                self.stick_grabbed = True
+                self.stick_pos_0 = self.grip_pos
+
+        if self.stick_grabbed:
+            # place stick in the continuity of the arm
+            self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
+            # check whether object is grabbed
+            if not self.object_grabbed:
+                if np.linalg.norm(self.object_pos - self.stick_pos, ord=2) < self.epsilon:
+                    self.object_grabbed = True
+            if self.object_grabbed:
+                self.object_pos = self.stick_pos
+                
+        # construct vector of observations
+        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
+
+        # Sample desired_goal and fill achieved_goal depending on goal module
+        self.desired_goal = self._sample_goal(self.module)
+        self.achieved_goal = self.compute_achieved_goal(self.observation, self.module)
+        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
+        self.steps = 0
+        self.done = False
+
+        return self.obs_out
 
 
     def step(self, action):
@@ -197,12 +195,12 @@ class ModularArmV0(gym.Env):
         
         # We compute the position of the end effector
         self.arm_pos = np.clip(self.arm_pos + action[:-1] / self.action_scaling,
-                                a_min=-np.ones(self.n_act-1),
-                                a_max=np.ones(self.n_act-1))
+                               a_min=-np.ones(self.n_act-1),
+                               a_max=np.ones(self.n_act-1))
         angles = np.cumsum(self.arm_pos)
         angles_rads = np.pi * angles
         self.grip_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
-                                   np.sum(np.sin(angles_rads) * self.len_arm)])
+                                  np.sum(np.sin(angles_rads) * self.len_arm)])
 
         if grip>0:
             self.gripper = 1
@@ -211,30 +209,27 @@ class ModularArmV0(gym.Env):
 
         # check whether stick is grabbed
         if not self.stick_grabbed:
-            if np.linalg.norm(self.initial_stick_pos_0-self.grip_pos, ord=2) < self.epsilon and self.gripper==-1:
+            if np.linalg.norm(self.stick_pos_0 - self.grip_pos, ord=2) < self.epsilon and self.gripper == -1:
                 self.stick_grabbed = True
                 self.stick_pos_0 = self.grip_pos
 
         if self.stick_grabbed:
-            self.stick_pos = np.copy(self.grip_pos + self.len_stick * np.array([np.cos(angles_rads[-1]), np.sin(angles_rads[-1])]))
+            # place stick in the continuity of the arm
+            self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
+            # check whether object is grabbed
             if not self.object_grabbed:
-                if np.linalg.norm(self.initial_obj_pos - self.stick_pos, ord=2) < self.epsilon:
+                if np.linalg.norm(self.object_pos - self.stick_pos, ord=2) < self.epsilon:
                     self.object_grabbed = True
             if self.object_grabbed:
                 self.object_pos = self.stick_pos
 
         # We update observation and reward
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
-
-        self.achieved_goal = np.zeros([6])
-        if self.module == 0:
-            self.achieved_goal[self.module*2: 2*(self.module+1)] = self.grip_pos
-        else:
-            self.achieved_goal[self.module*2: 2*(self.module+1)] = np.copy(self.observation[self.ind])
-        self.obs = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
-
+        self.achieved_goal = self.compute_achieved_goal(self.observation, self.module)
+        print(self.module)
+        print(self.achieved_goal)
+        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
-
 
         info = {}
         info['is_success'] = self.reward == 0
@@ -242,7 +237,7 @@ class ModularArmV0(gym.Env):
         if self.steps == self._n_timesteps:
             self.done = True
 
-        return self.obs, float(self.reward), self.done, info
+        return self.obs_out, float(self.reward), self.done, info
 
     def render(self, mode='human', close=False):
         """Renders the environment.
@@ -312,11 +307,11 @@ class ModularArmV0(gym.Env):
             plt.gca().add_patch(j)
         else:
             l = plt.Line2D(
-                [self.initial_stick_pos_0[0], self.stick_pos[0]], [self.initial_stick_pos_0[1], self.stick_pos[1]], linewidth=2)
+                [self.default_stick_pos_0[0], self.stick_pos[0]], [self.default_stick_pos_0[1], self.stick_pos[1]], linewidth=2)
             plt.gca().add_line(l)
             j = mpl.patches.Circle(tuple(self.stick_pos), radius=small_circle, fc=(102 / 255, 0, 204/255), zorder=15)
             plt.gca().add_patch(j)
-            j = mpl.patches.Circle(tuple(self.initial_stick_pos_0), radius=small_circle, fc=(1, 128/255, 0), zorder=15)
+            j = mpl.patches.Circle(tuple(self.default_stick_pos_0), radius=small_circle, fc=(1, 128/255, 0), zorder=15)
             plt.gca().add_patch(j)
 
         # draw object
@@ -324,7 +319,7 @@ class ModularArmV0(gym.Env):
             obj = mpl.patches.Rectangle(tuple(self.stick_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
             plt.gca().add_patch(obj)
         else:
-            obj = mpl.patches.Rectangle(tuple(self.initial_obj_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
+            obj = mpl.patches.Rectangle(tuple(self.default_obj_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
             plt.gca().add_patch(obj)
 
         if mode == 'rgb_array':
