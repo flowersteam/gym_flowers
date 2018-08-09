@@ -1,12 +1,23 @@
 import itertools
 from gym.envs.registration import register
 
-register(
-    id='ModularArm-v0',
-    entry_point='gym_flowers.envs:ModularArmV0',
-    max_episode_steps=75,
-    reward_threshold=1.0,
-)
+modules = ['0','1','2','02','01','012']
+random_objects = [True, False]
+for mod in modules:
+    for ro in random_objects:
+        if ro:
+            suffix=mod+'ro'
+        else:
+            suffix=mod
+        kwargs = dict(modules=[int(s) for s in mod],
+                      random_objects=ro)
+        register(
+            id='ModularArm{}-v0'.format(suffix),
+            entry_point='gym_flowers.envs:ModularArmV0',
+            max_episode_steps=75,
+            kwargs=kwargs,
+            reward_threshold=1.0,
+        )
 
 for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''
