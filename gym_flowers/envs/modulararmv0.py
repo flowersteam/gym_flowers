@@ -133,18 +133,18 @@ class ModularArmV0(gym.Env):
         if self.random_objects:
             while True:
                 self.stick_pos_0 = (np.random.uniform(-1, 1, 2))
-                if self.stick_pos_0[0]**1 + self.stick_pos_0[1]**2 < 1:
+                if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1:
                     break
             while True:
                 self.object_pos = (np.random.uniform(-1.5, 1.5, 2))
-                if self.object_pos[0]**1 + self.object_pos[1]**2 < 1.5**2:
+                if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2:
                     break
         else:
             self.stick_pos_0 = np.copy(self.default_stick_pos_0)
             self.object_pos = np.copy(self.default_obj_pos)
 
-        self.stick_pos = np.array([self.stick_pos_0[0] - self.len_stick * np.sin(np.pi / 4),
-                                   self.stick_pos_0[1] + self.len_stick * np.cos(np.pi / 4)])
+        self.stick_pos = np.array([self.stick_pos_0[0] + self.len_stick * np.cos(3*np.pi / 4),
+                                   self.stick_pos_0[1] + self.len_stick * np.sin(3*np.pi / 4)])
 
         self.gripper = -1 #open
         self.stick_grabbed = False
@@ -194,7 +194,7 @@ class ModularArmV0(gym.Env):
         grip = np.copy(action[-1])
         
         # We compute the position of the end effector
-        self.arm_pos = np.clip(self.arm_pos + action[:-1] / self.action_scaling,
+        self.arm_pos = np.clip((self.arm_pos + action[:-1] / self.action_scaling + 1) % 2 -1,
                                a_min=-np.ones(self.n_act-1),
                                a_max=np.ones(self.n_act-1))
         angles = np.cumsum(self.arm_pos)
@@ -215,7 +215,8 @@ class ModularArmV0(gym.Env):
 
         if self.stick_grabbed:
             # place stick in the continuity of the arm
-            self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
+            self.stick_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm) + np.cos(angles_rads[-1]) *self.len_stick,
+                                       np.sum(np.sin(angles_rads) * self.len_arm) + np.sin(angles_rads[-1]) *self.len_stick])
             # check whether object is grabbed
             if not self.object_grabbed:
                 if np.linalg.norm(self.object_pos - self.stick_pos, ord=2) < self.epsilon:
@@ -263,6 +264,7 @@ class ModularArmV0(gym.Env):
         plt.ylim([1.5, -1.5])
         plt.xticks([-1.5, -1, -0.5, 0, 0.5, 1, 1.5])
         plt.yticks([-1.5, -1, -0.5, 0, 0.5, 1, 1.5])
+        plt.gca().invert_yaxis()
 
         small_circle = 0.03
         large_circle = 0.05
@@ -305,11 +307,11 @@ class ModularArmV0(gym.Env):
             plt.gca().add_patch(j)
         else:
             l = plt.Line2D(
-                [self.default_stick_pos_0[0], self.stick_pos[0]], [self.default_stick_pos_0[1], self.stick_pos[1]], linewidth=2)
+                [self.stick_pos_0[0], self.stick_pos[0]], [self.stick_pos_0[1], self.stick_pos[1]], linewidth=2)
             plt.gca().add_line(l)
             j = mpl.patches.Circle(tuple(self.stick_pos), radius=small_circle, fc=(102 / 255, 0, 204/255), zorder=15)
             plt.gca().add_patch(j)
-            j = mpl.patches.Circle(tuple(self.default_stick_pos_0), radius=small_circle, fc=(1, 128/255, 0), zorder=15)
+            j = mpl.patches.Circle(tuple(self.stick_pos_0), radius=small_circle, fc=(1, 128/255, 0), zorder=15)
             plt.gca().add_patch(j)
 
         # draw object
@@ -317,13 +319,12 @@ class ModularArmV0(gym.Env):
             obj = mpl.patches.Rectangle(tuple(self.stick_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
             plt.gca().add_patch(obj)
         else:
-            obj = mpl.patches.Rectangle(tuple(self.default_obj_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
+            obj = mpl.patches.Rectangle(tuple(self.object_pos-0.05), 0.1, 0.1, fc=(102 / 255, 0, 204/255), zorder=20)
             plt.gca().add_patch(obj)
 
         if mode == 'rgb_array':
             return self.rendering  # return RGB frame suitable for video
         elif mode is 'human':
-            # plt.gca().invert_yaxis()
             plt.pause(0.01)
             plt.draw()
 
