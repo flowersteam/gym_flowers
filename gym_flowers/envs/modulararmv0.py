@@ -226,8 +226,6 @@ class ModularArmV0(gym.Env):
         # We update observation and reward
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.module)
-        print(self.module)
-        print(self.achieved_goal)
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
 
