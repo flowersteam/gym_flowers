@@ -8,10 +8,6 @@ register(
     reward_threshold=1.0,
 )
 
-reward_types = ['sparse', 'dense']
-obs_types = ['xyz', 'rgb', 'vae', 'betavae']
-params_iterator = list(itertools.product(reward_types, obs_types))
-
 for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''
     kwargs = {
@@ -26,6 +22,10 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=50,
     )
+
+reward_types = ['sparse', 'dense']
+obs_types = ['xyz', 'RGB', 'Vae', 'Betavae']
+params_iterator = list(itertools.product(reward_types, obs_types))
 
 for (reward_type, obs_type) in params_iterator:
     suffix = obs_type if obs_type is not 'xyz' else ''

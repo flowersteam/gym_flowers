@@ -321,7 +321,7 @@ class ArmBalls(gym.GoalEnv):
                     env_noise (float): amount of gaussian noise for rendering
                     one_goal (np_array): if True then the goal is always the same (useful for debug and test)
                     reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
-                    obs_type ('xyz', 'rgb', 'vae' or 'betavae'): the type of observation type, i.e. coordinates, images
+                    obs_type ('xyz', 'RGB', 'Vae' or 'Betavae'): the type of observation type, i.e. coordinates, images
                         or entangled/disentangled latent representation
         """
 
@@ -356,7 +356,7 @@ class ArmBalls(gym.GoalEnv):
             observation = spaces.Box(low=-np.ones(self._n_joints + 4),  # joints + position of ball and distractor
                                      high=np.ones(self._n_joints + 4),
                                      dtype=np.float32)
-        elif self._obs_type == 'rgb':
+        elif self._obs_type == 'RGB':
             observation = spaces.Box(low=0, high=1, shape=(64, 64, 3), dtype=np.float32)  # 64 * 64 image
 
             self.observation_space = spaces.Dict(dict(
@@ -364,7 +364,7 @@ class ArmBalls(gym.GoalEnv):
                 achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
                 observation=observation,
             ))
-        elif self._obs_type == 'vae':
+        elif self._obs_type == 'Vae':
             from latentgoalexplo.representation.representation_pytorch import ArmBallsVAE
             self.ArmBallsVAE = ArmBallsVAE
             observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
@@ -374,7 +374,7 @@ class ArmBalls(gym.GoalEnv):
                     achieved_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),
                     observation=observation,
             ))
-        elif self._obs_type == 'betavae':
+        elif self._obs_type == 'Betavae':
             from latentgoalexplo.representation.representation_pytorch import ArmBallsBetaVAE
             self.ArmBallsBetaVAE = ArmBallsBetaVAE
             observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
@@ -451,14 +451,14 @@ class ArmBalls(gym.GoalEnv):
         # We update observation and reward
         if self._obs_type == 'xyz':
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
-        elif self._obs_type == 'rgb':
+        elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
             self._observation = self._rendering
-        elif self._obs_type == 'vae':
+        elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
             self._observation = self.ArmBallsVAE.representation.squeeze()
-        elif self._obs_type == 'betavae':
+        elif self._obs_type == 'Betavae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsBetaVAE.act(X_pred=self._rendering)
             self._observation = self.ArmBallsBetaVAE.representation.squeeze()
@@ -493,14 +493,14 @@ class ArmBalls(gym.GoalEnv):
 
         if self._obs_type == 'xyz':
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
-        elif self._obs_type == 'rgb':
+        elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
             self._observation = self._rendering
-        elif self._obs_type == 'vae':
+        elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
             self._observation = self.ArmBallsVAE.representation.squeeze()
-        elif self._obs_type == 'betavae':
+        elif self._obs_type == 'Betavae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsBetaVAE.act(X_pred=self._rendering)
             self._observation = self.ArmBallsBetaVAE.representation.squeeze()
