@@ -1,5 +1,6 @@
 import itertools
 from gym.envs.registration import register
+import numpy as np
 
 modules = ['0','1','2','02','01','012']
 random_objects = [True, False]
@@ -18,6 +19,17 @@ for mod in modules:
             kwargs=kwargs,
             reward_threshold=1.0,
         )
+
+arm_lengths = [[0.5, 0.5], [0.5, 0.3, 0.2], [0.4, 0.3, 0.2, 0.1], [0.35, 0.25, 0.2, 0.1, 0.1],  [0.3, 0.2, 0.2, 0.1, 0.1, 0.05], [0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05]]
+for i in range(2,7):
+	suffix=str(i)
+	register(
+        id='ArmBall{}joints-v0'.format(suffix),
+        entry_point='gym_flowers.envs:ArmBall',
+        kwargs=dict(arm_lengths=np.array(arm_lengths[i-2])),
+        max_episode_steps=50,
+    	)
+
 
 for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''

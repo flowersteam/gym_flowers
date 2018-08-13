@@ -46,7 +46,7 @@ class ModularArmV0(gym.Env):
         self.gripper = -1 # open
         self.stick_grabbed = False
         self.object_grabbed = False
-
+        self.reward_range = (-1, 0)
 
         # We define the spaces
         self.action_space = spaces.Box(low=-np.ones(self.n_act),

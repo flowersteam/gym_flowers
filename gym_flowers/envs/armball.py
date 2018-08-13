@@ -48,6 +48,11 @@ class ArmBall(gym.GoalEnv):
         self._one_goal = one_goal
         self._action_scaling = action_scaling
 
+        if self.reward_type == 'sparse':
+            self.reward_range = (-1, 0)
+        else:
+            self.reward_range = (-2, 0)
+
         # We set the space
         self.action_space = spaces.Box(low=-np.ones(self._n_joints),
                                        high=np.ones(self._n_joints),
@@ -347,6 +352,12 @@ class ArmBalls(gym.GoalEnv):
         self._one_goal = one_goal
         self._action_scaling = action_scaling
         self._obs_type = obs_type
+        
+        if self.reward_type == 'sparse':
+            self.reward_range = (-1, 0)
+        else:
+            self.reward_range = (-2, 0)
+
 
         # We set the space
         self.action_space = spaces.Box(low=-np.ones(self._n_joints),
