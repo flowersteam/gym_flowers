@@ -368,7 +368,7 @@ class ArmBalls(gym.GoalEnv):
                                      high=np.ones(self._n_joints + 4),
                                      dtype=np.float32)
         elif self._obs_type == 'RGB':
-            observation = spaces.Box(low=0, high=1, shape=(64 * 64, ), dtype=np.float32)  # 64 * 64 image flattened
+            observation = spaces.Box(low=0, high=1, shape=(self._n_joints + 64 * 64, ), dtype=np.float32)  # joints + 64 * 64 image
 
             self.observation_space = spaces.Dict(dict(
                 desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
@@ -378,7 +378,10 @@ class ArmBalls(gym.GoalEnv):
         elif self._obs_type == 'Vae':
             from latentgoalexplo.representation.representation_pytorch import ArmBallsVAE
             self.ArmBallsVAE = ArmBallsVAE
-            observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
+            observation = spaces.Box(low=np.concatenate([-np.ones(self._n_joints), -3 * np.ones(10)]),  # joints + 10 latent values
+                                     high=np.concatenate([np.ones(self._n_joints), 3 * np.ones(10)]),
+                                     dtype=np.float32)
+            # observation = spaces.Box(low=-3, high=3, shape=(self._n_joints + 10, ), dtype=np.float32)
 
             self.observation_space = spaces.Dict(dict(
                     desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
@@ -388,7 +391,10 @@ class ArmBalls(gym.GoalEnv):
         elif self._obs_type == 'Betavae':
             from latentgoalexplo.representation.representation_pytorch import ArmBallsBetaVAE
             self.ArmBallsBetaVAE = ArmBallsBetaVAE
-            observation = spaces.Box(low=-3, high=3, shape=(10, ), dtype=np.float32)  # 10 latent values
+            observation = spaces.Box(low=np.concatenate([-np.ones(self._n_joints), -3 * np.ones(10)]),  # joints + 10 latent values
+                                     high=np.concatenate([np.ones(self._n_joints), 3 * np.ones(10)]),
+                                     dtype=np.float32)
+            # observation = spaces.Box(low=-3, high=3, shape=(self._n_joints + 10, ), dtype=np.float32)
 
             self.observation_space = spaces.Dict(dict(
                     desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
@@ -464,15 +470,17 @@ class ArmBalls(gym.GoalEnv):
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
-            self._observation = self._rendering.sum(axis=-1).flatten()
+            self._observation = np.concatenate([self._arm_pos, self._rendering.sum(axis=-1).flatten()])
         elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
-            self._observation = self.ArmBallsVAE.representation.squeeze()
+            self._observation = np.clip(self.ArmBallsVAE.representation.squeeze(), -3, 3)
+            self._observation = np.concatenate([self._arm_pos, self._observation])
         elif self._obs_type == 'Betavae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsBetaVAE.act(X_pred=self._rendering)
-            self._observation = self.ArmBallsBetaVAE.representation.squeeze()
+            self._observation = np.clip(self.ArmBallsBetaVAE.representation.squeeze(), -3, 3)
+            self._observation = np.concatenate([self._arm_pos, self._observation])
 
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
         self._steps += 1
@@ -506,15 +514,17 @@ class ArmBalls(gym.GoalEnv):
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
-            self._observation = self._rendering.sum(axis=-1).flatten()
+            self._observation = np.concatenate([self._arm_pos, self._rendering.sum(axis=-1).flatten()])
         elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
-            self._observation = self.ArmBallsVAE.representation.squeeze()
+            self._observation = np.clip(self.ArmBallsVAE.representation.squeeze(), -3, 3)
+            self._observation = np.concatenate([self._arm_pos, self._observation])
         elif self._obs_type == 'Betavae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsBetaVAE.act(X_pred=self._rendering)
-            self._observation = self.ArmBallsBetaVAE.representation.squeeze()
+            self._observation = np.clip(self.ArmBallsBetaVAE.representation.squeeze(), -3, 3)
+            self._observation = np.concatenate([self._arm_pos, self._observation])
 
         # We compute the initial reward.
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
