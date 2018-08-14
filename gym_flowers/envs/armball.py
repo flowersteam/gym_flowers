@@ -368,7 +368,7 @@ class ArmBalls(gym.GoalEnv):
                                      high=np.ones(self._n_joints + 4),
                                      dtype=np.float32)
         elif self._obs_type == 'RGB':
-            observation = spaces.Box(low=0, high=1, shape=(64, 64, 3), dtype=np.float32)  # 64 * 64 image
+            observation = spaces.Box(low=0, high=1, shape=(64 * 64, ), dtype=np.float32)  # 64 * 64 image flattened
 
             self.observation_space = spaces.Dict(dict(
                 desired_goal=spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32),  # position of ball
@@ -464,7 +464,7 @@ class ArmBalls(gym.GoalEnv):
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
-            self._observation = self._rendering
+            self._observation = self._rendering.sum(axis=-1).flatten()
         elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
@@ -506,7 +506,7 @@ class ArmBalls(gym.GoalEnv):
             self._observation = np.concatenate([self._arm_pos, self._actual_distract_pose, self.achieved_goal])
         elif self._obs_type == 'RGB':
             self._calc_rendering(width=64, height=64)
-            self._observation = self._rendering
+            self._observation = self._rendering.sum(axis=-1).flatten()
         elif self._obs_type == 'Vae':
             self._calc_rendering(width=64, height=64)
             self.ArmBallsVAE.act(X_pred=self._rendering)
