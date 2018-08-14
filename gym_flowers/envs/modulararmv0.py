@@ -21,7 +21,6 @@ class ModularArmV0(gym.Env):
                  len_stick=0.5, # stick length
                  len_arm=(0.5,0.3,0.2), # length of the arm parts
                  action_scaling=10, # action are in +/- 180/action_scaling
-                 goal_strategy='random', # strategy for goal selection
                  epsilon_grasping=0.1, # precision for goal reach
                  n_timesteps=75, # number of timesteps
                  random_objects=True, # whether objects are located at random
@@ -32,11 +31,11 @@ class ModularArmV0(gym.Env):
 
         self.random_objects = random_objects
         self.action_scaling = action_scaling
-        self.goal_strategy = goal_strategy
         self._n_timesteps = n_timesteps
         self.len_arm = np.array(len_arm)
         self.len_stick = len_stick
-        self.modules_id = [[0,1],[2,3],[4,5]]
+        all_modules_id = [[0,1],[2,3],[4,5]]
+        self.modules_id = [all_modules_id[i] for i in self.modules]
 
         self.default_stick_pos_0 = np.array(stick)
         self.default_obj_pos = np.array(obj)
@@ -70,13 +69,15 @@ class ModularArmV0(gym.Env):
 
         self.viewer = None
 
+        self.n_modules = len(self.modules)
+        self.p = 1/self.n_modules * np.ones([self.n_modules])
+
         # We set to None to rush error if reset not called
         self.reward = None
         self.observation = None
         self.done = None
         self.desired_goal = None
         self.achieved_goal = None
-        self.n_modules = 3
 
     def seed(self, seed):
         random.seed(seed)
@@ -110,9 +111,11 @@ class ModularArmV0(gym.Env):
         return -(d > self.epsilon).astype(np.int)
 
     def sample_module(self):
-        # we sample a goal module
-        if self.goal_strategy == 'random':
-            self.module = np.random.choice(self.modules)
+        # we sample a goal module given a probability vector (uniform if not modified using set_p_mmod_selection(p)
+        self.module = np.random.choice(self.modules, p=self.p)
+
+    def set_p_mod_selection(self, p):
+        self.p = p
 
     def compute_achieved_goal(self, obs, module):
         achieved_goal = np.zeros([6])
@@ -188,7 +191,7 @@ class ModularArmV0(gym.Env):
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
         self.steps = 0
         self.done = False
-
+        # print(self.module)
         return self.obs_out
 
 
