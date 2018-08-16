@@ -41,7 +41,7 @@ class ModularArmV0(gym.Env):
         self.default_obj_pos = np.array(obj)
 
         self.n_act = 4
-        self.n_obs = 13 #3 angular position of arm, stick end, object, stick beginning and gripper open or not, + mask
+        self.n_obs = 10 #3 angular position of arm, stick end, object, stick beginning and gripper open or not, + mask
 
         self.gripper = -1 # open
         self.stick_grabbed = False
