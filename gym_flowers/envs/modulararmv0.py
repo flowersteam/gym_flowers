@@ -31,7 +31,7 @@ class ModularArmV0(gym.Env):
 
         self.random_objects = random_objects
         self.action_scaling = action_scaling
-        self._n_timesteps = n_timesteps
+        self.n_timesteps = n_timesteps
         self.len_arm = np.array(len_arm)
         self.len_stick = len_stick
         all_modules_id = [[0,1],[2,3],[4,5]]
@@ -245,7 +245,7 @@ class ModularArmV0(gym.Env):
         info = {}
         info['is_success'] = self.reward == 0
         self.steps += 1
-        if self.steps == self._n_timesteps:
+        if self.steps == self.n_timesteps:
             self.done = True
 
         return self.obs_out, float(self.reward), self.done, info
