@@ -41,7 +41,7 @@ class ModularArmV0(gym.Env):
         self.default_obj_pos = np.array(obj)
 
         self.n_act = 4
-        self.n_obs = 10 #3 angular position of arm, stick end, object, stick beginning and gripper open or not
+        self.n_obs = 13 #3 angular position of arm, stick end, object, stick beginning and gripper open or not, + mask
 
         self.gripper = -1 # open
         self.stick_grabbed = False
@@ -191,7 +191,9 @@ class ModularArmV0(gym.Env):
         # Sample desired_goal and fill achieved_goal depending on goal module
         self.desired_goal = self._sample_goal(self.module)
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
+        self.mask = - 1/(self.n_modules-1) * np.ones([self.n_modules])
+        self.mask[self.module] = 1
+        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
         self.steps = 0
         self.done = False
         # print(self.module)
@@ -238,7 +240,9 @@ class ModularArmV0(gym.Env):
         # We update observation and reward
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
+        self.mask = - 1 / (self.n_modules - 1) * np.ones([self.n_modules])
+        self.mask[self.module] = 1
+        self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
 
         info = {}
