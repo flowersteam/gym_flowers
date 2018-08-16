@@ -112,10 +112,7 @@ class ModularArmV0(gym.Env):
 
     def sample_module(self):
         # we sample a goal module given a probability vector (uniform if not modified using set_p_mmod_selection(p)
-        if np.random.random()<0.2:
-            self.module = np.random.choice(self.modules)
-        else:
-            self.module = np.random.choice(self.modules, p=self.p)
+       self.module = np.random.choice(self.modules, p=self.p)
 
     def set_p_mod_selection(self, p):
         self.p = p
