@@ -117,14 +117,16 @@ class ModularArmV0(gym.Env):
 
     def set_desired_goal(self, g):
 
-        # map uniform in box to uniform in circle, radius depends on module r=1 for 0 and 1, r=1.5 for 2
-        angle = g[0] * np.pi
-        if self.module == 2:
-            r = np.abs(g[1]) * 1.5
-        else:
-            r = np.abs(g[1])
         self.desired_goal = np.zeros([6])
-        self.desired_goal[self.modules_id[self.module]] = np.array([np.sqrt(r) * np.cos(angle), np.sqrt(r) * np.sin(angle)])
+
+        # # map uniform in box to uniform in circle, radius depends on module r=1 for 0 and 1, r=1.5 for 2
+        # angle = g[0] * np.pi
+        # if self.module == 2:
+        #     r = np.abs(g[1]) * 1.5
+        # else:
+        #     r = np.abs(g[1])
+        # self.desired_goal[self.modules_id[self.module]] = np.array([np.sqrt(r) * np.cos(angle), np.sqrt(r) * np.sin(angle)])
+        self.desired_goal[self.modules_id[self.module]] = g
 
 
     def compute_achieved_goal(self, obs, module):
