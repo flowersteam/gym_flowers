@@ -2,6 +2,13 @@ import itertools
 from gym.envs.registration import register
 import numpy as np
 
+
+register(id='Reacher{}-v0'.format(2),
+         entry_point='gym_flowers.envs.mujoco:ReacherEnv2',
+         max_episode_steps=50,
+         reward_threshold=1.0
+         )
+
 modules = ['0','1','2','02','01','012']
 random_objects = [True, False]
 for mod in modules:
@@ -15,7 +22,7 @@ for mod in modules:
         register(
             id='ModularArm{}-v0'.format(suffix),
             entry_point='gym_flowers.envs:ModularArmV0',
-            max_episode_steps=75,
+            max_episode_steps=50,
             kwargs=kwargs,
             reward_threshold=1.0,
         )

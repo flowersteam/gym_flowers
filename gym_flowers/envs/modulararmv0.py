@@ -22,7 +22,7 @@ class ModularArmV0(gym.Env):
                  len_arm=(0.5,0.3,0.2), # length of the arm parts
                  action_scaling=10, # action are in +/- 180/action_scaling
                  epsilon_grasping=0.1, # precision for goal reach
-                 n_timesteps=75, # number of timesteps
+                 n_timesteps=50, # number of timesteps
                  random_objects=True, # whether objects are located at random
                  modules = [0]
                  ):
