@@ -118,7 +118,7 @@ class ModularArmV0(gym.Env):
     def set_desired_goal(self, g):
 
         # map uniform in box to uniform in circle, radius depends on module r=1 for 0 and 1, r=1.5 for 2
-        angle = g[0]
+        angle = g[0] * np.pi
         if self.module == 2:
             r = np.abs(g[1]) * 1.5
         else:
