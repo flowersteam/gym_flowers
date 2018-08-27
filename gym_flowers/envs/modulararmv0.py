@@ -148,7 +148,6 @@ class ModularArmV0(gym.Env):
 
 
     def reset(self):
-        # self.sample_module()
         # We reset the simulation
         if self.random_objects:
             while True:
