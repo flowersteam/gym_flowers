@@ -184,6 +184,7 @@ class ModularArmV0(gym.Env):
                 self.stick_pos_0 = self.grip_pos
 
         if self.stick_grabbed:
+            self.stick_pos_0 = self.grip_pos
             # place stick in the continuity of the arm
             self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
             # check whether object is grabbed
@@ -239,6 +240,7 @@ class ModularArmV0(gym.Env):
                 self.stick_pos_0 = self.grip_pos
 
         if self.stick_grabbed:
+            self.stick_pos_0 = self.grip_pos
             # place stick in the continuity of the arm
             self.stick_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm) + np.cos(angles_rads[-1]) *self.len_stick,
                                        np.sum(np.sin(angles_rads) * self.len_arm) + np.sin(angles_rads[-1]) *self.len_stick])
