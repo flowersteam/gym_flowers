@@ -89,8 +89,7 @@ class ArmStickBallV0(gym.Env):
         if achieved_goal.ndim > 1:
             d = np.zeros([goal.shape[0]])
             for i in range(goal.shape[0]):
-                ind = np.argwhere(goal[i, :] != 0).squeeze()
-                d[i] = np.linalg.norm(achieved_goal[i, ind] - goal[i, ind], ord=2)
+                d[i] = np.linalg.norm(achieved_goal[i, :] - goal[i, :], ord=2)
         else:
             ind = np.argwhere(goal != 0)
             d = np.linalg.norm(achieved_goal[ind] - goal[ind], ord=2)
