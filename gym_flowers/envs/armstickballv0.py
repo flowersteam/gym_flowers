@@ -48,11 +48,11 @@ class ArmStickBallV0(gym.Env):
                                        high=np.ones(self.n_act),
                                        dtype=np.float32)
 
-        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(6) * 1.5,
-                                                                          high=np.ones(6) * 1.5,
+        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(2) * 1.5,
+                                                                          high=np.ones(2) * 1.5,
                                                                           dtype='float32'),
-                                                  achieved_goal=spaces.Box(low=-np.ones(6) * 1.5,
-                                                                           high=np.ones(6) * 1.5,
+                                                  achieved_goal=spaces.Box(low=-np.ones(2) * 1.5,
+                                                                           high=np.ones(2) * 1.5,
                                                                            dtype='float32'),
                                                   observation=spaces.Box(low=-np.ones(self.n_obs) * 1.5,
                                                                          high=np.ones(self.n_obs) * 1.5,
@@ -78,12 +78,7 @@ class ArmStickBallV0(gym.Env):
         return seed
 
     def _sample_goal(self):
-        desired_goal = np.zeros([6])
-        while True:
-            desired_goal = (np.random.random(2) - 0.5) * 3
-            if desired_goal[0] ** 2 + desired_goal[1] ** 2 < 1.5 ** 2:
-                break
-        return desired_goal
+        return np.random.uniform(-1.5,1.5,2)
 
     def compute_reward(self, achieved_goal, goal, info=None):
         if achieved_goal.ndim > 1:
@@ -91,8 +86,7 @@ class ArmStickBallV0(gym.Env):
             for i in range(goal.shape[0]):
                 d[i] = np.linalg.norm(achieved_goal[i, :] - goal[i, :], ord=2)
         else:
-            ind = np.argwhere(goal != 0)
-            d = np.linalg.norm(achieved_goal[ind] - goal[ind], ord=2)
+            d = np.linalg.norm(achieved_goal - goal, ord=2)
         return -(d > self.epsilon).astype(np.int)
 
 
