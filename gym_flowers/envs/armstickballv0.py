@@ -36,7 +36,7 @@ class ArmStickBallV0(gym.Env):
         self.default_obj_pos = np.array(obj)
 
         self.n_act = 4
-        self.n_obs = 10  # 3 angular position of arm, stick end, object, stick beginning and gripper open or not
+        self.n_obs = 12  # 3 angular position of arm, stick end, object, stick beginning and gripper open or not
 
         self.gripper = -1  # open
         self.stick_grabbed = False
@@ -137,8 +137,10 @@ class ArmStickBallV0(gym.Env):
             if self.object_grabbed:
                 self.object_pos = self.stick_pos
 
+        stick_grabbed = 1 if self.stick_grabbed else -1
+        object_grabbed = 1 if self.object_grabbed else -1
         # construct vector of observations
-        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
+        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper, stick_grabbed, object_grabbed])])
         self.desired_goal = self._sample_goal()
         self.achieved_goal = self.object_pos.copy()
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
@@ -184,8 +186,10 @@ class ArmStickBallV0(gym.Env):
             if self.object_grabbed:
                 self.object_pos = self.stick_pos
 
-        # We update observation and reward
-        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
+        stick_grabbed = 1 if self.stick_grabbed else -1
+        object_grabbed = 1 if self.object_grabbed else -1
+        # construct vector of observations
+        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper, stick_grabbed, object_grabbed])])
         self.achieved_goal = self.object_pos.copy()
 
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal)
