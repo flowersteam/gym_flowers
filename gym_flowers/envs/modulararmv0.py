@@ -126,8 +126,8 @@ class ModularArmV0(gym.Env):
         # else:
         #     r = np.abs(g[1])
         # self.desired_goal[self.modules_id[self.module]] = np.array([np.sqrt(r) * np.cos(angle), np.sqrt(r) * np.sin(angle)])
-        coeff = 1.5 if self.module==2 else 1
-        self.desired_goal[self.modules_id[self.module]] = g*coeff
+        coeff = 1 if self.module==0 else 1.5
+        self.desired_goal[self.modules_id[self.module]] = g.copy()*coeff
 
 
     def compute_achieved_goal(self, obs, module):
