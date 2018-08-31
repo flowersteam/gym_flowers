@@ -106,10 +106,11 @@ class ModularArmV0(gym.Env):
             for i in range(goal.shape[0]):
                 ind = np.argwhere(goal[i, :] != 0).squeeze()
                 d[i] = np.linalg.norm(achieved_goal[i, ind] - goal[i, ind], ord=2)
+            return -(d > self.epsilon).astype(np.int).reshape([d.shape[0], 1])
         else:
             ind = np.argwhere(goal != 0)
             d = np.linalg.norm(achieved_goal[ind] - goal[ind], ord=2)
-        return -(d > self.epsilon).astype(np.int)
+            return -(d > self.epsilon).astype(np.int)
 
 
     def set_module(self, m):
