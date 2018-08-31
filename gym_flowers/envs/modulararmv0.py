@@ -105,10 +105,7 @@ class ModularArmV0(gym.Env):
             d = np.zeros([goal.shape[0]])
             for i in range(goal.shape[0]):
                 ind = np.argwhere(goal[i, :] != 0).squeeze()
-                try:
-                    d[i] = np.linalg.norm(achieved_goal[i, ind] - goal[i, ind], ord=2)
-                except:
-                    assert False, str(achieved_goal.shape) +' ' + str(goal.shape) + ' ' +str(ind) + ' ' + str(i)
+                d[i] = np.linalg.norm(achieved_goal[i, ind] - goal[i, ind], ord=2)
             return -(d > self.epsilon).astype(np.int).reshape([d.shape[0], 1])
         else:
             ind = np.argwhere(goal != 0)
@@ -164,8 +161,8 @@ class ModularArmV0(gym.Env):
                 if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2:
                     break
         else:
-            self.stick_pos_0 = np.copy(self.default_stick_pos_0)
-            self.object_pos = np.copy(self.default_obj_pos)
+            self.stick_pos_0 = np.copy(self.default_stick_pos_0) + np.random.uniform(-0.1, 0.1, 2)
+            self.object_pos = np.copy(self.default_obj_pos) + np.random.uniform(-0.1, 0.1, 2)
 
         self.stick_pos = np.array([self.stick_pos_0[0] + self.len_stick * np.cos(3*np.pi / 4),
                                    self.stick_pos_0[1] + self.len_stick * np.sin(3*np.pi / 4)])
