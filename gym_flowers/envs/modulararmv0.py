@@ -154,12 +154,12 @@ class ModularArmV0(gym.Env):
         if self.random_objects:
             while True:
                 self.stick_pos_0 = (np.random.uniform(-1, 1, 2))
-                if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1 and self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 > 0.8**2 and self.stick_pos_0[0]<0:
+                if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1:# and self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 > 0.8**2 and self.stick_pos_0[0]<0:
                     break
                 print('ok')
             while True:
                 self.object_pos = (np.random.uniform(-1.5, 1.5, 2))
-                if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2 and self.object_pos[0]**2 + self.object_pos[1]**2 > 1.1:
+                if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2:# and self.object_pos[0]**2 + self.object_pos[1]**2 > 1.1:
                     break
         else:
             self.stick_pos_0 = np.copy(self.default_stick_pos_0) + np.random.uniform(-0.1, 0.1, 2)
