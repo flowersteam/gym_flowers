@@ -41,7 +41,7 @@ class ModularArmV0(gym.Env):
         self.default_obj_pos = np.array(obj)
 
         self.n_act = 4
-        self.n_obs = 12 #3 angular position of arm, stick end, object, stick beginning and gripper open or not + stick grabbed + object grabbed
+        self.n_obs = 10 #3 angular position of arm, stick end, object, stick beginning and gripper open or not, + mask
 
         self.gripper = -1 # open
         self.stick_grabbed = False
@@ -70,35 +70,34 @@ class ModularArmV0(gym.Env):
         self.viewer = None
 
         self.n_modules = len(self.modules)
+        self.p = 1/self.n_modules * np.ones([self.n_modules])
 
         # We set to None to rush error if reset not called
         self.reward = None
         self.observation = None
         self.done = None
-        self.desired_goal = np.zeros([6])
-        self.module = 0
+        self.desired_goal = None
         self.achieved_goal = None
-        self.info = dict(is_success=0)
 
     def seed(self, seed):
         random.seed(seed)
         np.random.seed(seed)
         return seed
 
-    # def _sample_goal(self, module):
-    #     desired_goal = np.zeros([6])
-    #     if self.module == 0:
-    #         while True:
-    #             goal = (np.random.random(2) - 0.5) * 2
-    #             if goal[0] ** 2 + goal[1] ** 2 < 1:
-    #                 break
-    #     elif self.module == 2 or self.module == 1:
-    #         while True:
-    #             goal = (np.random.random(2) - 0.5) * 3
-    #             if goal[0] ** 2 + goal[1] ** 2 < 1.5 ** 2:
-    #                 break
-    #     desired_goal[module * 2: 2 * (module + 1)] = goal
-    #     return desired_goal
+    def _sample_goal(self, module):
+        desired_goal = np.zeros([6])
+        if self.module == 0:
+            while True:
+                goal = (np.random.random(2) - 0.5) * 2
+                if goal[0] ** 2 + goal[1] ** 2 < 1:
+                    break
+        elif self.module == 2 or self.module == 1:
+            while True:
+                goal = (np.random.random(2) - 0.5) * 3
+                if goal[0] ** 2 + goal[1] ** 2 < 1.5 ** 2:
+                    break
+        desired_goal[module * 2: 2 * (module + 1)] = goal
+        return desired_goal
 
     def compute_reward(self, achieved_goal, goal, info=None):
         if achieved_goal.ndim > 1:
@@ -106,30 +105,17 @@ class ModularArmV0(gym.Env):
             for i in range(goal.shape[0]):
                 ind = np.argwhere(goal[i, :] != 0).squeeze()
                 d[i] = np.linalg.norm(achieved_goal[i, ind] - goal[i, ind], ord=2)
-            return -(d > self.epsilon).astype(np.int).reshape([d.shape[0], 1])
         else:
             ind = np.argwhere(goal != 0)
             d = np.linalg.norm(achieved_goal[ind] - goal[ind], ord=2)
-            return -(d > self.epsilon).astype(np.int)
+        return -(d > self.epsilon).astype(np.int)
 
+    def sample_module(self):
+        # we sample a goal module given a probability vector (uniform if not modified using set_p_mmod_selection(p)
+       self.module = np.random.choice(self.modules, p=self.p)
 
-    def set_module(self, m):
-        self.module = m
-
-    def set_desired_goal(self, g):
-
-        self.desired_goal = np.zeros([6])
-
-        # # map uniform in box to uniform in circle, radius depends on module r=1 for 0 and 1, r=1.5 for 2
-        # angle = g[0] * np.pi
-        # if self.module == 2:
-        #     r = np.abs(g[1]) * 1.5
-        # else:
-        #     r = np.abs(g[1])
-        # self.desired_goal[self.modules_id[self.module]] = np.array([np.sqrt(r) * np.cos(angle), np.sqrt(r) * np.sin(angle)])
-        coeff = 1 if self.module==0 else 1.5
-        self.desired_goal[self.modules_id[self.module]] = g.copy()*coeff
-
+    def set_p_mod_selection(self, p):
+        self.p = p
 
     def compute_achieved_goal(self, obs, module):
         achieved_goal = np.zeros([6])
@@ -150,20 +136,20 @@ class ModularArmV0(gym.Env):
 
 
     def reset(self):
+        self.sample_module()
         # We reset the simulation
         if self.random_objects:
             while True:
                 self.stick_pos_0 = (np.random.uniform(-1, 1, 2))
-                if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1 and self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 > 0.8**2 and self.stick_pos_0[0]<0:
+                if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1:
                     break
-                print('ok')
             while True:
                 self.object_pos = (np.random.uniform(-1.5, 1.5, 2))
-                if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2 and self.object_pos[0]**2 + self.object_pos[1]**2 > 1.1:
+                if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2:
                     break
         else:
-            self.stick_pos_0 = np.copy(self.default_stick_pos_0) + np.random.uniform(-0.1, 0.1, 2)
-            self.object_pos = np.copy(self.default_obj_pos) + np.random.uniform(-0.1, 0.1, 2)
+            self.stick_pos_0 = np.copy(self.default_stick_pos_0)
+            self.object_pos = np.copy(self.default_obj_pos)
 
         self.stick_pos = np.array([self.stick_pos_0[0] + self.len_stick * np.cos(3*np.pi / 4),
                                    self.stick_pos_0[1] + self.len_stick * np.sin(3*np.pi / 4)])
@@ -187,7 +173,6 @@ class ModularArmV0(gym.Env):
                 self.stick_pos_0 = self.grip_pos
 
         if self.stick_grabbed:
-            self.stick_pos_0 = self.grip_pos
             # place stick in the continuity of the arm
             self.stick_pos = np.copy(self.stick_pos_0 + self.len_stick * np.array([np.cos(angles_rads[-1]), -np.sin(angles_rads[-1])]))
             # check whether object is grabbed
@@ -196,26 +181,19 @@ class ModularArmV0(gym.Env):
                     self.object_grabbed = True
             if self.object_grabbed:
                 self.object_pos = self.stick_pos
-
-        stick_grabbed = 1 if self.stick_grabbed else -1
-        object_grabbed = 1 if self.object_grabbed else -1
+                
         # construct vector of observations
-        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper, stick_grabbed, object_grabbed])])
-        self.steps = 0
-        self.done = False
-        return self.observation
+        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
 
-    def reset_goal(self, goal, module):
-
-        self.set_module(module)
-        self.set_desired_goal(goal)
-
-        # fill achieved_goal depending on goal module
+        # Sample desired_goal and fill achieved_goal depending on goal module
+        self.desired_goal = self._sample_goal(self.module)
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
         self.mask = - 1/(self.n_modules-1) * np.ones([self.n_modules])
         self.mask[self.module] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
-
+        self.steps = 0
+        self.done = False
+        # print(self.module)
         return self.obs_out
 
 
@@ -246,7 +224,6 @@ class ModularArmV0(gym.Env):
                 self.stick_pos_0 = self.grip_pos
 
         if self.stick_grabbed:
-            self.stick_pos_0 = self.grip_pos
             # place stick in the continuity of the arm
             self.stick_pos = np.array([np.sum(np.cos(angles_rads) * self.len_arm) + np.cos(angles_rads[-1]) *self.len_stick,
                                        np.sum(np.sin(angles_rads) * self.len_arm) + np.sin(angles_rads[-1]) *self.len_stick])
@@ -258,22 +235,20 @@ class ModularArmV0(gym.Env):
                 self.object_pos = self.stick_pos
 
         # We update observation and reward
-        stick_grabbed = 1 if self.stick_grabbed else -1
-        object_grabbed = 1 if self.object_grabbed else -1
-        # construct vector of observations
-        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper, stick_grabbed, object_grabbed])])
+        self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper])])
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
         self.mask = - 1 / (self.n_modules - 1) * np.ones([self.n_modules])
         self.mask[self.module] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
 
-        self.info = dict(is_success= self.reward == 0)
+        info = {}
+        info['is_success'] = self.reward == 0
         self.steps += 1
         if self.steps == self.n_timesteps:
             self.done = True
 
-        return self.obs_out, float(self.reward), self.done, self.info
+        return self.obs_out, float(self.reward), self.done, info
 
     def render(self, mode='human', close=False):
         """Renders the environment.
