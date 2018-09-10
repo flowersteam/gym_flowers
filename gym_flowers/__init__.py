@@ -11,21 +11,25 @@ register(id='Reacher{}-v0'.format(2),
 
 modules = ['0','1','2','02','01','012']
 random_objects = [True, False]
+dist = [True, False]
 for mod in modules:
     for ro in random_objects:
-        if ro:
-            suffix=mod+'ro'
-        else:
-            suffix=mod
-        kwargs = dict(modules=[int(s) for s in mod],
-                      random_objects=ro)
-        register(
-            id='ModularArm{}-v0'.format(suffix),
-            entry_point='gym_flowers.envs:ModularArmV0',
-            max_episode_steps=50,
-            kwargs=kwargs,
-            reward_threshold=1.0,
-        )
+        for d in dist:
+            suffix = mod
+            if ro:
+                suffix += 'ro'
+            if d:
+                suffix += 'dist'
+            kwargs = dict(modules=[int(s) for s in mod],
+                          random_objects=ro,
+                          distractor=d)
+            register(
+                id='ModularArm{}-v0'.format(suffix),
+                entry_point='gym_flowers.envs:ModularArmV0',
+                max_episode_steps=50,
+                kwargs=kwargs,
+                reward_threshold=1.0,
+            )
 
 
 random_objects = [True, False]
