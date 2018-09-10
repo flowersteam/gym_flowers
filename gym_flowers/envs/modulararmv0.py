@@ -29,7 +29,7 @@ class ModularArmV0(gym.Env):
                  modules = [0]
                  ):
 
-        self.modules = modules # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
+        self.modules = modules.copy() # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
         self.distractor = distractor
         self.random_objects = random_objects
         self.action_scaling = action_scaling
@@ -42,7 +42,10 @@ class ModularArmV0(gym.Env):
         self.n_modules = len(self.modules)
 
         all_modules_id = [[0,1],[2,3],[4,5],[5,6]]
-        self.modules_id = [all_modules_id[i] for i in self.modules]
+        try:
+            self.modules_id = [all_modules_id[i] for i in self.modules]
+        except:
+            pass
 
         self.default_stick_pos_0 = np.array(stick)
         self.default_obj_pos = np.array(obj)
@@ -64,11 +67,11 @@ class ModularArmV0(gym.Env):
                                        high=np.ones(self.n_act),
                                        dtype=np.float32)
 
-        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(self.n_modules)*1.5,
-                                                                          high=np.ones(self.n_modules)*1.5,
+        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(self.n_modules*2)*1.5,
+                                                                          high=np.ones(self.n_modules*2)*1.5,
                                                                           dtype='float32'),
-                                                  achieved_goal=spaces.Box(low=-np.ones(self.n_modules)*1.5,
-                                                                           high=np.ones(self.n_modules)*1.5,
+                                                  achieved_goal=spaces.Box(low=-np.ones(self.n_modules*2)*1.5,
+                                                                           high=np.ones(self.n_modules*2)*1.5,
                                                                            dtype='float32'),
                                                   observation=spaces.Box(low=-np.ones(self.n_obs)*1.5,
                                                                          high=np.ones(self.n_obs)*1.5,
@@ -85,7 +88,7 @@ class ModularArmV0(gym.Env):
         self.reward = None
         self.observation = None
         self.done = None
-        self.desired_goal = np.zeros([self.n_modules])
+        self.desired_goal = np.zeros([self.n_modules*2])
         self.module = 0
         self.achieved_goal = None
         self.info = dict(is_success=0)
@@ -114,7 +117,7 @@ class ModularArmV0(gym.Env):
 
     def set_desired_goal(self, g):
 
-        self.desired_goal = np.zeros([6])
+        self.desired_goal = np.zeros([self.n_modules*2])
         coeff = 1 if self.module==0 else 1.5
         self.desired_goal[self.modules_id[self.module]] = g.copy()*coeff
 
@@ -147,12 +150,12 @@ class ModularArmV0(gym.Env):
                 self.stick_pos_0 = (np.random.uniform(-1, 1, 2))
                 if self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 < 1 and self.stick_pos_0[0]**2 + self.stick_pos_0[1]**2 > 0.8**2 and self.stick_pos_0[0]<0:
                     break
-                print('ok')
             while True:
                 self.object_pos = (np.random.uniform(-1.5, 1.5, 2))
                 if self.object_pos[0]**2 + self.object_pos[1]**2 < 1.5**2 and self.object_pos[0]**2 + self.object_pos[1]**2 > 1.1:
                     break
-                if self.distractor:
+            if self.distractor:
+                while True:
                     self.distractor_pos = (np.random.uniform(-1.5, 1.5, 2))
                     if self.distractor_pos[0] ** 2 + self.distractor_pos[1] ** 2 < 1.5 ** 2:
                         break
