@@ -214,7 +214,7 @@ class ModularArmV0(gym.Env):
 
         # fill achieved_goal depending on goal module
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.mask = np.zeros([self.n_modules])
+        self.mask = - (1 / self.n_modules) * np.ones([self.n_modules])
         self.mask[self.module] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
 
@@ -270,7 +270,7 @@ class ModularArmV0(gym.Env):
         if self.distractor:
             self.observation = np.concatenate([self.observation, self.distractor_pos])
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.mask = np.zeros([self.n_modules])
+        self.mask = - (1 / self.n_modules) * np.ones([self.n_modules])
         self.mask[self.module] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
