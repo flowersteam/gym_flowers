@@ -26,10 +26,10 @@ class ModularArmV0(gym.Env):
                  n_timesteps=50, # number of timesteps
                  random_objects=True, # whether objects are located at random
                  distractor=False,
-                 modules = [0]
+                 tasks = [0]
                  ):
 
-        self.modules = modules.copy() # goal module, 0 is gripper pos, 1 is end stick pos, 2 is object pos
+        self.tasks = tasks.copy() # goal task, 0 is gripper pos, 1 is end stick pos, 2 is object pos
         self.distractor = distractor
         self.random_objects = random_objects
         self.action_scaling = action_scaling
@@ -38,12 +38,12 @@ class ModularArmV0(gym.Env):
         self.len_stick = len_stick
 
         if self.distractor:
-            self.modules.append(modules[-1] + 1)
-        self.n_modules = len(self.modules)
+            self.tasks.append(tasks[-1] + 1)
+        self.n_tasks = len(self.tasks)
 
-        all_modules_id = [[0,1],[2,3],[4,5],[5,6]]
+        all_tasks_id = [[0,1],[2,3],[4,5],[5,6]]
         try:
-            self.modules_id = [all_modules_id[i] for i in self.modules]
+            self.tasks_id = [all_tasks_id[i] for i in self.tasks]
         except:
             pass
 
@@ -67,11 +67,11 @@ class ModularArmV0(gym.Env):
                                        high=np.ones(self.n_act),
                                        dtype=np.float32)
 
-        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(self.n_modules*2)*1.5,
-                                                                          high=np.ones(self.n_modules*2)*1.5,
+        self.observation_space = spaces.Dict(dict(desired_goal=spaces.Box(low=-np.ones(self.n_tasks*2)*1.5,
+                                                                          high=np.ones(self.n_tasks*2)*1.5,
                                                                           dtype='float32'),
-                                                  achieved_goal=spaces.Box(low=-np.ones(self.n_modules*2)*1.5,
-                                                                           high=np.ones(self.n_modules*2)*1.5,
+                                                  achieved_goal=spaces.Box(low=-np.ones(self.n_tasks*2)*1.5,
+                                                                           high=np.ones(self.n_tasks*2)*1.5,
                                                                            dtype='float32'),
                                                   observation=spaces.Box(low=-np.ones(self.n_obs)*1.5,
                                                                          high=np.ones(self.n_obs)*1.5,
@@ -88,8 +88,8 @@ class ModularArmV0(gym.Env):
         self.reward = None
         self.observation = None
         self.done = None
-        self.desired_goal = np.zeros([self.n_modules*2])
-        self.module = 0
+        self.desired_goal = np.zeros([self.n_tasks*2])
+        self.task = 0
         self.achieved_goal = None
         self.info = dict(is_success=0)
 
@@ -112,31 +112,31 @@ class ModularArmV0(gym.Env):
             return -(d > self.epsilon).astype(np.int)
 
 
-    def set_module(self, m):
-        self.module = m
+    def set_task(self, m):
+        self.task = m
 
     def set_desired_goal(self, g):
 
-        self.desired_goal = np.zeros([self.n_modules*2])
-        coeff = 1 if self.module==0 else 1.5
-        self.desired_goal[self.modules_id[self.module]] = g.copy()*coeff
+        self.desired_goal = np.zeros([self.n_tasks*2])
+        coeff = 1 if self.task==0 else 1.5
+        self.desired_goal[self.tasks_id[self.task]] = g.copy()*coeff
 
 
-    def compute_achieved_goal(self, obs, module):
-        achieved_goal = np.zeros([self.n_modules*2])
-        if 0 in module:
+    def compute_achieved_goal(self, obs, task):
+        achieved_goal = np.zeros([self.n_tasks*2])
+        if 0 in task:
             # grip position is the achieved goal
             angles = np.cumsum(obs[:3])
             angles_rads = np.pi * angles
             achieved_goal[:2] = np.array([np.sum(np.cos(angles_rads) * self.len_arm),
                                          np.sum(np.sin(angles_rads) * self.len_arm)])
-        if 1 in module:
+        if 1 in task:
             # end_stick_pos is the achieved goal
             achieved_goal[2:4] = obs[3:5]
-        if 2 in module:
+        if 2 in task:
             # obj_pos is the achieved goal
             achieved_goal[4:6] = obs[5:7]
-        if 3 in module:
+        if 3 in task:
             #distractor pos is the achieved goal
             achieved_goal[6:8] = obs[12:14]
 
@@ -207,15 +207,15 @@ class ModularArmV0(gym.Env):
         self.done = False
         return self.observation
 
-    def reset_goal(self, goal, module):
+    def reset_goal(self, goal, task):
 
-        self.set_module(module)
+        self.set_task(task)
         self.set_desired_goal(goal)
 
-        # fill achieved_goal depending on goal module
-        self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.mask = - (1 / self.n_modules) * np.ones([self.n_modules])
-        self.mask[self.module] = 1
+        # fill achieved_goal depending on goal task
+        self.achieved_goal = self.compute_achieved_goal(self.observation, self.tasks)
+        self.mask = np.zeros([self.n_tasks])
+        self.mask[self.task] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
 
         return self.obs_out
@@ -269,9 +269,9 @@ class ModularArmV0(gym.Env):
         self.observation = np.concatenate([self.arm_pos, self.stick_pos, self.object_pos, self.stick_pos_0, np.array([self.gripper, stick_grabbed, object_grabbed])])
         if self.distractor:
             self.observation = np.concatenate([self.observation, self.distractor_pos])
-        self.achieved_goal = self.compute_achieved_goal(self.observation, self.modules)
-        self.mask = - (1 / self.n_modules) * np.ones([self.n_modules])
-        self.mask[self.module] = 1
+        self.achieved_goal = self.compute_achieved_goal(self.observation, self.tasks)
+        self.mask = np.zeros([self.n_tasks])
+        self.mask[self.task] = 1
         self.obs_out = dict(observation=self.observation, achieved_goal=self.achieved_goal, desired_goal=self.desired_goal, mask=self.mask)
         self.reward = self.compute_reward(self.achieved_goal, self.desired_goal)
 
@@ -339,7 +339,7 @@ class ModularArmV0(gym.Env):
         plt.gca().add_patch(j)
 
         # draw goal
-        j = mpl.patches.Circle(tuple(self.desired_goal[self.module*2: 2*(self.module+1)]), radius=self.epsilon, fc=(1, 0, 0), zorder=2)
+        j = mpl.patches.Circle(tuple(self.desired_goal[self.task*2: 2*(self.task+1)]), radius=self.epsilon, fc=(1, 0, 0), zorder=2)
         plt.gca().add_patch(j)
 
         # draw stick
@@ -393,10 +393,10 @@ class ModularArmV0(gym.Env):
         return 6
 
     @property
-    def nb_modules(self):
-        return self.n_modules
+    def nb_tasks(self):
+        return self.n_tasks
 
     @property
-    def current_module(self):
-        return self.module
+    def current_task(self):
+        return self.task
 

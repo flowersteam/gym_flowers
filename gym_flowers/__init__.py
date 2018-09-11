@@ -9,18 +9,18 @@ register(id='Reacher{}-v0'.format(2),
          reward_threshold=1.0
          )
 
-modules = ['0','1','2','02','01','012']
+tasks = ['0','1','2','02','01','012']
 random_objects = [True, False]
 dist = [True, False]
-for mod in modules:
+for task in tasks:
     for ro in random_objects:
         for d in dist:
-            suffix = mod
+            suffix = task
             if ro:
                 suffix += 'ro'
             if d:
                 suffix += 'dist'
-            kwargs = dict(modules=[int(s) for s in mod],
+            kwargs = dict(tasks=[int(s) for s in task],
                           random_objects=ro,
                           distractor=d)
             register(
