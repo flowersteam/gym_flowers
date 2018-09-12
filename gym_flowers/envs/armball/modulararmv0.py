@@ -42,10 +42,8 @@ class ModularArmV0(gym.Env):
         self.n_tasks = len(self.tasks)
 
         all_tasks_id = [[0,1],[2,3],[4,5],[5,6]]
-        try:
-            self.tasks_id = [all_tasks_id[i] for i in self.tasks]
-        except:
-            pass
+        self.tasks_id = [all_tasks_id[i] for i in self.tasks]
+
 
         self.default_stick_pos_0 = np.array(stick)
         self.default_obj_pos = np.array(obj)
@@ -80,7 +78,7 @@ class ModularArmV0(gym.Env):
 
 
         self.epsilon = epsilon_grasping # precision to decide whether a goal is fulfilled or not
-
+        self.flat = False
         self.viewer = None
 
 
@@ -112,14 +110,22 @@ class ModularArmV0(gym.Env):
             return -(d > self.epsilon).astype(np.int)
 
 
-    def set_task(self, m):
-        self.task = m
+    def _set_task(self, t):
+        if not self.flat:
+            self.task = t
 
-    def set_desired_goal(self, g):
+    def set_flat_env(self):
+        self.flat = True
+
+    def _set_desired_goal(self, g):
 
         self.desired_goal = np.zeros([self.n_tasks*2])
-        coeff = 1 if self.task==0 else 1.5
-        self.desired_goal[self.tasks_id[self.task]] = g.copy()*coeff
+        if not self.flat:
+            coeff = 1 if self.task==0 else 1.5
+            self.desired_goal[self.tasks_id[self.task]] = g.copy()*coeff
+        else:
+            self.desired_goal[0:2] = g[0:2]
+            self.desired_goal[2:] = g[2:] * 1.5
 
 
     def compute_achieved_goal(self, obs, task):
@@ -207,10 +213,10 @@ class ModularArmV0(gym.Env):
         self.done = False
         return self.observation
 
-    def reset_goal(self, goal, task):
+    def reset_task_goal(self, goal, task=None):
 
-        self.set_task(task)
-        self.set_desired_goal(goal)
+        self._set_task(task)
+        self._set_desired_goal(goal)
 
         # fill achieved_goal depending on goal task
         self.achieved_goal = self.compute_achieved_goal(self.observation, self.tasks)

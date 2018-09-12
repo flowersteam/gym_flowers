@@ -9,6 +9,24 @@ register(id='Reacher{}-v0'.format(2),
          reward_threshold=1.0
          )
 
+for n_tasks in range(1,7):
+    suffix = str(n_tasks)
+    tasks = list(range(n_tasks))
+    for reward_type in ['sparse', 'dense']:
+        if reward_type == 'dense':
+            suffix += 'Dense'
+        kwargs = {
+            'reward_type': reward_type,
+            'tasks': tasks
+        }
+        register(
+            id='ModularFetchPickAndPlace{}-v0'.format(suffix),
+            entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv',
+            kwargs=kwargs,
+            max_episode_steps=50,
+        )
+
+
 tasks = ['0','1','2','02','01','012']
 random_objects = [True, False]
 dist = [True, False]
@@ -25,7 +43,7 @@ for task in tasks:
                           distractor=d)
             register(
                 id='ModularArm{}-v0'.format(suffix),
-                entry_point='gym_flowers.envs:ModularArmV0',
+                entry_point='gym_flowers.envs.armball:ModularArmV0',
                 max_episode_steps=50,
                 kwargs=kwargs,
                 reward_threshold=1.0,
@@ -41,7 +59,7 @@ for ro in random_objects:
     kwargs = dict(random_objects=ro)
     register(
         id='ArmStickBall{}-v0'.format(suffix),
-        entry_point='gym_flowers.envs:ArmStickBallV0',
+        entry_point='gym_flowers.envs.armball:ArmStickBallV0',
         max_episode_steps=50,
         kwargs=kwargs,
         reward_threshold=1.0,
@@ -52,7 +70,7 @@ for i in range(2,7):
     suffix=str(i)
     register(
         id='ArmBall{}joints-v0'.format(suffix),
-        entry_point='gym_flowers.envs:ArmBall',
+        entry_point='gym_flowers.envs.armball:ArmBall',
         kwargs=dict(arm_lengths=np.array(arm_lengths[i-2])),
         max_episode_steps=50,
     )
@@ -68,7 +86,7 @@ for reward_type in ['sparse', 'dense']:
 
     register(
         id='ArmBall{}-v0'.format(suffix),
-        entry_point='gym_flowers.envs:ArmBall',
+        entry_point='gym_flowers.envs.armball:ArmBall',
         kwargs=kwargs,
         max_episode_steps=50,
     )
@@ -89,7 +107,7 @@ for (reward_type, obs_type) in params_iterator:
 
     register(
             id='ArmBalls{}-v0'.format(suffix),
-            entry_point='gym_flowers.envs:ArmBalls',
+            entry_point='gym_flowers.envs.armball:ArmBalls',
             kwargs=kwargs,
             max_episode_steps=50,
     )
