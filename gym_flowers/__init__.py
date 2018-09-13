@@ -20,7 +20,7 @@ for n_tasks in range(1,7):
             'tasks': tasks
         }
         register(
-            id='ModularFetchPickAndPlace{}-v0'.format(suffix),
+            id='ModularFetch{}-v0'.format(suffix),
             entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv',
             kwargs=kwargs,
             max_episode_steps=50,
