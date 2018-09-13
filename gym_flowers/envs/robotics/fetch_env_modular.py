@@ -323,8 +323,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):
-        d = goal_distance(achieved_goal, desired_goal)
-        return (d < self.distance_threshold).astype(np.float32)
+        return float(not self.compute_reward(achieved_goal, desired_goal, {}))
 
     def _env_setup(self, initial_qpos):
         for name, value in initial_qpos.items():
