@@ -9,7 +9,7 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
+class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
     """Superclass for all Fetch environments.
     """
 
@@ -47,14 +47,12 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         # define the different tasks
         # task 0: Hand position (3D)
-        # task 1: Cube0 position (2D)
-        # task 2: Cube1 position (2D)
-        # task 3: Cube0 position (3D)
-        # task 4: Cube1 position (3D)
-        # task 5: Stack one Cube over other in given position (2D)
+        # task 1: any cube position (2D)
+        # task 2: any cube position (3D)
+        # task 3: Stack one Cube over other in given position (2D)
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        all_tasks_id = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [3, 4, 5], [6, 7, 8], [3, 4, 5, 6, 7, 8]]
+        all_tasks_id = [[0, 1, 2], [3, 4, 5, 6, 7, 8], [3, 4, 5, 6, 7, 8], [3, 4, 5, 6, 7, 8]]
         ind = 0
         self.tasks_id = []
         for i in range(0,self.n_tasks):
@@ -73,7 +71,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             model_path = model_path
         else:
             model_path = os.path.join(os.path.dirname(__file__), 'assets', model_path)
-        super(ModularFetchEnv, self).__init__(
+        super(ModularFetchEnv2, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=4,
             initial_qpos=initial_qpos)
 
@@ -89,18 +87,29 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             for i_t in range(self.n_tasks):
                 if ind == self.tasks_id[i_t]:
                     good_task.append(i_t)
-            assert len(good_task) == 1
-
+            try:
+                assert len(good_task) == 1
+            except:
+                pass
             task = good_task[0]
 
-            if task in [0, 1, 2, 3, 4]:
+            if task == 0:
                 # Compute distance between goal and the achieved goal.
                 d = goal_distance(achieved_goal[self.tasks_id[task]], goal[self.tasks_id[task]])
                 if self.reward_type == 'sparse':
                     return -(d > self.distance_threshold).astype(np.float32)
                 else:
                     return -d
-            elif task == 5:
+            elif task in [1, 2]:
+                # Compute distance between goal and the achieved goal.
+                d0 = goal_distance(achieved_goal[self.tasks_id[task][:3]], goal[self.tasks_id[task][:3]])
+                d1 = goal_distance(achieved_goal[self.tasks_id[task][3:6]], goal[self.tasks_id[task][:3]])
+
+                if self.reward_type == 'sparse':
+                    return -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
+                else:
+                    return -d
+            elif task == 3:
                 d0 = goal_distance(achieved_goal[self.tasks_id[task][:2]], goal[self.tasks_id[task][:2]])
                 d1 = goal_distance(achieved_goal[ self.tasks_id[task][3:5]], goal[self.tasks_id[task][:2]])
                 dh = np.abs(achieved_goal[self.tasks_id[task][2]] - achieved_goal[self.tasks_id[task][5]])
@@ -122,14 +131,25 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
 
                 task = good_task[0]
-                if task in [0, 1, 2, 3, 4]:
+                if task == 0:
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_id[task]], goal[i_g,self.tasks_id[task]])
                     if self.reward_type == 'sparse':
                         r[i_g] =  -(d > self.distance_threshold).astype(np.float32)
                     else:
                         r[i_g] = -d
-                elif task == 5:
+
+                elif task in [1, 2]:
+                    # Compute distance between goal and the achieved goal.
+                    d0 = goal_distance(achieved_goal[i_g, self.tasks_id[task][:3]], goal[i_g, self.tasks_id[task][:3]])
+                    d1 = goal_distance(achieved_goal[i_g, self.tasks_id[task][3:6]], goal[i_g, self.tasks_id[task][:3]])
+
+                    if self.reward_type == 'sparse':
+                        r[i_g] = -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
+                    else:
+                        r[i_g] = -d
+
+                elif task == 3:
                     d0 = goal_distance(achieved_goal[i_g,self.tasks_id[task][:2]], goal[i_g,self.tasks_id[task][:2]])
                     d1 = goal_distance(achieved_goal[i_g,self.tasks_id[task][3:5]], goal[i_g,self.tasks_id[task][:2]])
                     dh = np.abs(achieved_goal[i_g, self.tasks_id[task][2]] - achieved_goal[i_g, self.tasks_id[task][5]])
@@ -187,27 +207,32 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         desired_goal = np.zeros([self.dim_g])
         if self.task==0: # 3D coordinates for the hand
             tmp_goal = self.initial_gripper_xpos[:3] + goal * 0.15
+            tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
             desired_goal[self.tasks_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task in [1, 2]: # 3D coordinates for the object in 2D plane
-            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-            tmp_goal[2] = self.height_offset
-            desired_goal[self.tasks_id[self.task]] = tmp_goal.copy()
-            self.goal_to_render = tmp_goal.copy()
-
-        elif self.task == 5: # 3D coordinates for the two objects
+        elif self.task==1: # 3D coordinates for the object in 2D plane
             tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
             tmp_goal[2] = self.height_offset
             desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
             desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task in [3, 4]: # 3D coordinates for the object
-            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-            tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2 # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            desired_goal[self.tasks_id[self.task]] = tmp_goal.copy()
+        elif self.task==2:  # 3D coordinates for the object
+            tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
+            tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+            desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
+            desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
+
+        elif self.task == 3: # 3D coordinates for the two objects
+            tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
+            tmp_goal[2] = self.height_offset
+            desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
+            desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
+            self.goal_to_render = tmp_goal.copy()
+
+
 
         self.goal = desired_goal
         self.mask = np.zeros([self.n_tasks])
