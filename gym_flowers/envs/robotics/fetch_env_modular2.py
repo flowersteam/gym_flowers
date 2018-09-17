@@ -48,19 +48,26 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
         # define the different tasks
         # task 0: Hand position (3D)
         # task 1: any cube position (2D)
-        # task 2: any cube position (3D)
-        # task 3: Stack one Cube over other in given position (2D)
+        # task 2: far cube position (2D)
+        # task 3: any cube position (3D)
+        # task 4: Stack one Cube over other in given position (2D)
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        all_tasks_id = [[0, 1, 2], [3, 4, 5, 6, 7, 8], [3, 4, 5, 6, 7, 8], [3, 4, 5, 6, 7, 8]]
-        ind = 0
-        self.tasks_id = []
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5, 6, 7, 8], [9, 10, 11], [3, 4, 5, 6, 7, 8], [3, 4, 5, 6, 7, 8]]
+        dim_tasks_g = [3] * self.n_tasks
+        ind_g = 0
+        ind_ag = 0
+
+        self.tasks_g_id = []
+        self.tasks_ag_id = []
         for i in range(0,self.n_tasks):
-            self.tasks_id.append(list(range(ind, ind + len(all_tasks_id[i]))))
-            ind += len(all_tasks_id[i])
-        self.tasks_obs_id = [all_tasks_id[i] for i in self.tasks]
+            self.tasks_ag_id.append(list(range(ind_ag, ind_ag + len(self.tasks_obs_id[i]))))
+            ind_ag += len(self.tasks_obs_id[i])
+            self.tasks_g_id.append(list(range(ind_g, ind_g + 3)))
+            ind_g += 3
         self.flat = False
-        self.dim_g = sum([len(self.tasks_id[i]) for i in range(self.n_tasks)])
+        self.dim_ag = sum([len(self.tasks_ag_id[i]) for i in range(self.n_tasks)])
+        self.dim_g = sum(dim_tasks_g)
         self.goal = np.zeros([self.dim_g])
         self.mask = np.zeros([self.n_tasks])
 
@@ -85,39 +92,40 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
             ind = np.argwhere(goal!=0).squeeze().tolist()
             good_task = []
             for i_t in range(self.n_tasks):
-                if ind == self.tasks_id[i_t]:
+                if ind == self.tasks_g_id[i_t]:
                     good_task.append(i_t)
             try:
                 assert len(good_task) == 1
             except:
                 pass
+
             task = good_task[0]
 
-            if task == 0:
+            if task in [0, 2]:
                 # Compute distance between goal and the achieved goal.
-                d = goal_distance(achieved_goal[self.tasks_id[task]], goal[self.tasks_id[task]])
+                d = goal_distance(achieved_goal[self.tasks_ag_id[task]], goal[self.tasks_g_id[task]])
                 if self.reward_type == 'sparse':
                     return -(d > self.distance_threshold).astype(np.float32)
                 else:
-                    return -d
-            elif task in [1, 2]:
+                    return - d
+            elif task in [1, 3]:
                 # Compute distance between goal and the achieved goal.
-                d0 = goal_distance(achieved_goal[self.tasks_id[task][:3]], goal[self.tasks_id[task][:3]])
-                d1 = goal_distance(achieved_goal[self.tasks_id[task][3:6]], goal[self.tasks_id[task][:3]])
+                d0 = goal_distance(achieved_goal[self.tasks_ag_id[task][:3]], goal[self.tasks_g_id[task]])
+                d1 = goal_distance(achieved_goal[self.tasks_ag_id[task][3:6]], goal[self.tasks_g_id[task]])
 
                 if self.reward_type == 'sparse':
                     return -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
                 else:
-                    return -d
-            elif task == 3:
-                d0 = goal_distance(achieved_goal[self.tasks_id[task][:2]], goal[self.tasks_id[task][:2]])
-                d1 = goal_distance(achieved_goal[ self.tasks_id[task][3:5]], goal[self.tasks_id[task][:2]])
-                dh = np.abs(achieved_goal[self.tasks_id[task][2]] - achieved_goal[self.tasks_id[task][5]])
+                    return - min(d0, d1)
+            elif task == 4:
+                d0 = goal_distance(achieved_goal[self.tasks_ag_id[task][:2]], goal[self.tasks_g_id[task][:2]])
+                d1 = goal_distance(achieved_goal[ self.tasks_ag_id[task][3:5]], goal[self.tasks_g_id[task][:2]])
+                dh = np.abs(achieved_goal[self.tasks_ag_id[task][2]] - achieved_goal[self.tasks_ag_id[task][5]])
                 if self.reward_type == 'sparse':
                     return - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.04).astype(np.float32) or (dh >
                                                                                                                                                                             0.055).astype(np.float32))
                 else:
-                    return - 1
+                    return - max(d0, d1, dh)
         else:
             r = np.zeros([goal.shape[0]])
             for i_g in range(goal.shape[0]):
@@ -125,39 +133,38 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
                 ind = np.argwhere(goal[i_g] != 0).squeeze().tolist()
                 good_task = []
                 for i_t in range(self.n_tasks):
-                    if ind == self.tasks_id[i_t]:
+                    if ind == self.tasks_g_id[i_t]:
                         good_task.append(i_t)
+
                 assert len(good_task) == 1
-
-
                 task = good_task[0]
-                if task == 0:
+                if task in [0, 2]:
                     # Compute distance between goal and the achieved goal.
-                    d = goal_distance(achieved_goal[i_g, self.tasks_id[task]], goal[i_g,self.tasks_id[task]])
+                    d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g,self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
                         r[i_g] =  -(d > self.distance_threshold).astype(np.float32)
                     else:
                         r[i_g] = -d
 
-                elif task in [1, 2]:
+                elif task in [1, 3]:
                     # Compute distance between goal and the achieved goal.
-                    d0 = goal_distance(achieved_goal[i_g, self.tasks_id[task][:3]], goal[i_g, self.tasks_id[task][:3]])
-                    d1 = goal_distance(achieved_goal[i_g, self.tasks_id[task][3:6]], goal[i_g, self.tasks_id[task][:3]])
+                    d0 = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
+                    d1 = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:6]], goal[i_g, self.tasks_g_id[task]])
 
                     if self.reward_type == 'sparse':
                         r[i_g] = -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
                     else:
-                        r[i_g] = -d
+                        r[i_g] = - min(d0, d1)
 
-                elif task == 3:
-                    d0 = goal_distance(achieved_goal[i_g,self.tasks_id[task][:2]], goal[i_g,self.tasks_id[task][:2]])
-                    d1 = goal_distance(achieved_goal[i_g,self.tasks_id[task][3:5]], goal[i_g,self.tasks_id[task][:2]])
-                    dh = np.abs(achieved_goal[i_g, self.tasks_id[task][2]] - achieved_goal[i_g, self.tasks_id[task][5]])
+                elif task == 4:
+                    d0 = goal_distance(achieved_goal[i_g,self.tasks_ag_id[task][:2]], goal[i_g,self.tasks_g_id[task][:2]])
+                    d1 = goal_distance(achieved_goal[i_g,self.tasks_ag_id[task][3:5]], goal[i_g,self.tasks_g_id[task][:2]])
+                    dh = np.abs(achieved_goal[i_g, self.tasks_ag_id[task][2]] - achieved_goal[i_g, self.tasks_ag_id[task][5]])
                     if self.reward_type == 'sparse':
                         r[i_g] = - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.045).astype(np.float32) or
                                     (dh >0.051).astype(np.float32))
                     else:
-                        r[i_g] = - 1
+                        r[i_g] = - max(d0, d1, dh)
 
             return r.reshape([r.size, 1])
 
@@ -208,31 +215,26 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
         if self.task==0: # 3D coordinates for the hand
             tmp_goal = self.initial_gripper_xpos[:3] + goal * 0.15
             tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            desired_goal[self.tasks_id[self.task]] = tmp_goal.copy()
+            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task==1: # 3D coordinates for the object in 2D plane
-            tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
+        elif self.task in [1, 2]: # 3D coordinates for the object in 2D plane
+            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
             tmp_goal[2] = self.height_offset
-            desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
-            desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
+            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task==2:  # 3D coordinates for the object
-            tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
+        elif self.task==3:  # 3D coordinates for the object
+            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
             tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
-            desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
+            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task == 3: # 3D coordinates for the two objects
-            tmp_goal = self.initial_gripper_xpos[:3] + goal[:3] * self.target_range + self.target_offset
+        elif self.task == 4: # 3D coordinates for the two objects
+            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
             tmp_goal[2] = self.height_offset
-            desired_goal[self.tasks_id[self.task][0:3]] = tmp_goal.copy()
-            desired_goal[self.tasks_id[self.task][3:6]] = tmp_goal.copy()
+            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
-
-
 
         self.goal = desired_goal
         self.mask = np.zeros([self.n_tasks])
@@ -240,9 +242,9 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
 
     def _compute_achieved_goal(self, obs):
 
-        achieved_goal = np.zeros([self.dim_g])
+        achieved_goal = np.zeros([self.dim_ag])
         for i_t in range(self.n_tasks):
-            achieved_goal[self.tasks_id[i_t]] = obs[self.tasks_obs_id[i_t]]
+            achieved_goal[self.tasks_ag_id[i_t]] = obs[self.tasks_obs_id[i_t]]
         return achieved_goal
 
     def _get_obs(self):
@@ -273,15 +275,29 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
             # gripper state
             object1_rel_pos = object1_pos - grip_pos
             object1_velp -= grip_velp
+
+            # object 2
+            object2_pos = self.sim.data.get_site_xpos('object2')
+            # rotations
+            object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))
+            # velocities
+            object2_velp = self.sim.data.get_site_xvelp('object2') * dt
+            object2_velr = self.sim.data.get_site_xvelr('object2') * dt
+            # gripper state
+            object2_rel_pos = object2_pos - grip_pos
+            object2_velp -= grip_velp
         else:
-            object1_pos = object0_rot = object0_velp = object0_velr = object0_rel_pos = np.zeros(0)
+            object0_pos = object0_rot = object0_velp = object0_velr = object0_rel_pos = np.zeros(0)
             object1_pos = object1_rot = object1_velp = object1_velr = object1_rel_pos = np.zeros(0)
+            object2_pos = object2_rot = object2_velp = object2_velr = object2_rel_pos = np.zeros(0)
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
 
         obs = np.concatenate([
-            grip_pos, object0_pos.ravel(), object1_pos.ravel(), object0_rel_pos.ravel(), object1_rel_pos.ravel(), gripper_state, object0_rot.ravel(),
-            object1_rot.ravel(), object0_velp.ravel(), object1_velp.ravel(), object0_velr.ravel(), object1_velr.ravel(), grip_velp, gripper_vel,
+            grip_pos, object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), gripper_state,
+            object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), object0_velr.ravel(),
+            object1_velr.ravel(), object2_velr.ravel(), grip_velp,
+            gripper_vel,
         ])
 
         if not self.has_object:
@@ -319,21 +335,31 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
         if self.has_object:
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
+            object2_xpos_init = np.array([1.7, 0.75])
+            object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
             # set second object's position
             while np.linalg.norm(object1_xpos - self.initial_gripper_xpos[:2]) < 0.1 or np.linalg.norm(object1_xpos - object0_xpos) < 0.1:
                 object1_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
-            # object1_xpos = object0_xpos.copy()
+            # set third object's position
+            while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
+                object2_xpos = object2_xpos_init + + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
+            object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
             assert object0_qpos.shape == (7,)
             assert object1_qpos.shape == (7,)
+            assert object2_qpos.shape == (7,)
             object0_qpos[:2] = object0_xpos
             object1_qpos[:2] = object1_xpos
-            # object0_qpos[2] = 1
+            object2_qpos[:2] = object2_xpos
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
+            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+
 
         self.sim.forward()
         return True

@@ -9,7 +9,7 @@ register(id='Reacher{}-v0'.format(2),
          reward_threshold=1.0
          )
 
-for n_tasks in range(0,5):
+for n_tasks in range(0,6):
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))
     for reward_type in ['sparse', 'dense']:

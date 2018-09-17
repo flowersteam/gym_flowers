@@ -294,21 +294,30 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         if self.has_object:
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
+            object2_xpos_init = np.array([1.7, 0.75])
+            object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
             # set second object's position
             while np.linalg.norm(object1_xpos - self.initial_gripper_xpos[:2]) < 0.1 or np.linalg.norm(object1_xpos - object0_xpos) < 0.1:
                 object1_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
-            # object1_xpos = object0_xpos.copy()
+            # set third object's position
+            while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
+                object2_xpos = object2_xpos_init + + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
+            object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
             assert object0_qpos.shape == (7,)
             assert object1_qpos.shape == (7,)
+            assert object2_qpos.shape == (7,)
             object0_qpos[:2] = object0_xpos
             object1_qpos[:2] = object1_xpos
-            # object0_qpos[2] = 1
+            object2_qpos[:2] = object2_xpos
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
+            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
 
         self.sim.forward()
         return True

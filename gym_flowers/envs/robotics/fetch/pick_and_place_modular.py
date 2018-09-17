@@ -8,8 +8,9 @@ class ModularFetchPickAndPlaceEnv(fetch_env_modular.ModularFetchEnv, utils.EzPic
             'robot0:slide0': 0.405,
             'robot0:slide1': 0.48,
             'robot0:slide2': 0.0,
-            'object0:joint': [1.25, 0.53, 0.4, 1., 0., 0., 0.],
-            'object1:joint': [1.25, 0.53, 0.4, 1., 0., 0., 0.]
+            'object0:joint': [1.25, 0.53, 0.45, 1., 0., 0., 0.],
+            'object1:joint': [1.25, 0.53, 0.45, 1., 0., 0., 0.],
+            'object2:joint': [1.25, 0.53, 0.45, 1., 0., 0., 0.]
         }
         fetch_env_modular.ModularFetchEnv.__init__(
             self, 'fetch/pick_and_place_modular.xml', has_object=True, block_gripper=False, n_substeps=20,

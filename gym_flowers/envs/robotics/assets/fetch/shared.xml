@@ -61,11 +61,14 @@
             <default class="robot0:blue">
                 <geom rgba="0.086 0.506 0.767 1.0"></geom>
             </default>
-             <default class="object0:blue">
+             <default class="object:blue">
                 <geom rgba="0.0 0.4 0.8 1.0"></geom>
             </default>
-             <default class="object0:orange">
+             <default class="object:orange">
                 <geom rgba="1. 0.5 0. 1.0"></geom>
+            </default>
+              <default class="object:purple">
+                <geom rgba=".8 0.5 0.8 1.0"></geom>
             </default>
         </default>
     </default>
