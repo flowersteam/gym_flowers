@@ -94,10 +94,7 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
             for i_t in range(self.n_tasks):
                 if ind == self.tasks_g_id[i_t]:
                     good_task.append(i_t)
-            try:
-                assert len(good_task) == 1
-            except:
-                pass
+            assert len(good_task) == 1
 
             task = good_task[0]
 
@@ -105,27 +102,29 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
                 # Compute distance between goal and the achieved goal.
                 d = goal_distance(achieved_goal[self.tasks_ag_id[task]], goal[self.tasks_g_id[task]])
                 if self.reward_type == 'sparse':
-                    return -(d > self.distance_threshold).astype(np.float32)
+                    r = -(d > self.distance_threshold).astype(np.float32)
                 else:
-                    return - d
+                    r = - d
             elif task in [1, 3]:
                 # Compute distance between goal and the achieved goal.
                 d0 = goal_distance(achieved_goal[self.tasks_ag_id[task][:3]], goal[self.tasks_g_id[task]])
                 d1 = goal_distance(achieved_goal[self.tasks_ag_id[task][3:6]], goal[self.tasks_g_id[task]])
 
                 if self.reward_type == 'sparse':
-                    return -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
+                    r = -((d0 > self.distance_threshold).astype(np.float32) and (d1 > self.distance_threshold).astype(np.float32))
                 else:
-                    return - min(d0, d1)
+                    r = - min(d0, d1)
             elif task == 4:
                 d0 = goal_distance(achieved_goal[self.tasks_ag_id[task][:2]], goal[self.tasks_g_id[task][:2]])
                 d1 = goal_distance(achieved_goal[ self.tasks_ag_id[task][3:5]], goal[self.tasks_g_id[task][:2]])
                 dh = np.abs(achieved_goal[self.tasks_ag_id[task][2]] - achieved_goal[self.tasks_ag_id[task][5]])
                 if self.reward_type == 'sparse':
-                    return - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.04).astype(np.float32) or (dh >
+                    r = - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.04).astype(np.float32) or (dh >
                                                                                                                                                                             0.055).astype(np.float32))
                 else:
-                    return - max(d0, d1, dh)
+                    r = - max(d0, d1, dh)
+
+            return 2 * r
         else:
             r = np.zeros([goal.shape[0]])
             for i_g in range(goal.shape[0]):
@@ -162,11 +161,11 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
                     dh = np.abs(achieved_goal[i_g, self.tasks_ag_id[task][2]] - achieved_goal[i_g, self.tasks_ag_id[task][5]])
                     if self.reward_type == 'sparse':
                         r[i_g] = - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.045).astype(np.float32) or
-                                    (dh >0.051).astype(np.float32))
+                                    (dh > 0.051).astype(np.float32))
                     else:
                         r[i_g] = - max(d0, d1, dh)
 
-            return r.reshape([r.size, 1])
+            return 2*r.reshape([r.size, 1])
 
 
     # RobotEnv methods
@@ -197,7 +196,6 @@ class ModularFetchEnv2(robot_env_modular.ModularRobotEnv):
 
     def reset_task_goal(self, goal, task=None):
         self._set_task(task)
-        print(task)
         self._set_goal(goal)
         obs = self._get_obs()
         return obs

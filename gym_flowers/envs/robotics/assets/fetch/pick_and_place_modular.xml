@@ -47,5 +47,6 @@
 	<actuator>
 		<position ctrllimited="true" ctrlrange="0 0.2" joint="robot0:l_gripper_finger_joint" kp="30000" name="robot0:l_gripper_finger_joint" user="1"></position>
 		<position ctrllimited="true" ctrlrange="0 0.2" joint="robot0:r_gripper_finger_joint" kp="30000" name="robot0:r_gripper_finger_joint" user="1"></position>
+        <!--<position ctrllimited="true" ctrlrange="-1 1" joint="object2:joint" name="object2:random_mvt" kp="20" user="1"></position>-->
 	</actuator>
 </mujoco>
