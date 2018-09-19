@@ -116,7 +116,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 else:
                     r = - max(d0, d1, dh)
 
-            return 2 * r
+            return r
 
         else:
             r = np.zeros([goal.shape[0]])
@@ -148,7 +148,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                     else:
                         r[i_g] = - max(d0, d1, dh)
 
-            return 2 * r.reshape([r.size, 1])
+            return r.reshape([r.size, 1])
 
 
     # RobotEnv methods
