@@ -49,11 +49,11 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # task 0: Hand position (3D)
         # task 1: Cube0 position (2D)
         # task 2: Cube2 position (2D)
-        # task 3: Cube0 position (3D)
+        # task 3: Cube1 position (3D above Cube0)
         # task 4: Stack Cube0 and Cube1 in given position (2D)
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [9, 10, 11], [6, 7, 8], [3, 4, 5, 6, 7, 8]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [9, 10, 11], [6, 7, 8], [6, 7, 8, 0, 1, 2]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
@@ -106,14 +106,12 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                     r = - d
 
             elif task == 4:
-                d0 = goal_distance(achieved_goal[self.tasks_ag_id[task][:2]], goal[self.tasks_g_id[task][:2]])
-                d1 = goal_distance(achieved_goal[self.tasks_ag_id[task][3:5]], goal[self.tasks_g_id[task][:2]])
-                dh = np.abs(achieved_goal[self.tasks_ag_id[task][2]] - achieved_goal[self.tasks_ag_id[task][5]])
+                dcube = goal_distance(achieved_goal[self.tasks_ag_id[task][:3]], goal[self.tasks_g_id[task]])
+                dgrip = goal_distance(achieved_goal[self.tasks_ag_id[task][3:]], goal[self.tasks_g_id[task]])
                 if self.reward_type == 'sparse':
-                    r = - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.04).astype(np.float32) or
-                           (dh > 0.055).astype(np.float32))
+                    r = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold).astype(np.float32))
                 else:
-                    r = - max(d0, d1, dh)
+                    r = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
 
             return r
 
@@ -138,14 +136,13 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                         r[i_g] = -d
 
                 elif task == 4:
-                    d0 = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:2]], goal[i_g, self.tasks_g_id[task][:2]])
-                    d1 = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:5]], goal[i_g, self.tasks_g_id[task][:2]])
-                    dh = np.abs(achieved_goal[i_g, self.tasks_ag_id[task][2]] - achieved_goal[i_g, self.tasks_ag_id[task][5]])
+                    dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
+                    dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
-                        r[i_g] = - ((d0 > self.distance_threshold).astype(np.float32) or (d1 > self.distance_threshold).astype(np.float32) or (dh < 0.045).astype(np.float32) or
-                                    (dh > 0.051).astype(np.float32))
+                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold).astype(np.float32))
+
                     else:
-                        r[i_g] = - max(d0, d1, dh)
+                        r[i_g] = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
 
             return r.reshape([r.size, 1])
 
@@ -178,46 +175,56 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
     def reset_task_goal(self, goal, task=None):
         self._set_task(task)
-        self._set_goal(goal)
+        self.goal, self.mask = self._compute_goal(goal, task)
         obs = self._get_obs()
         return obs
 
     def _set_task(self, t):
-        print(t)
         if not self.flat:
             self.task = t
 
     def set_flat_env(self):
         self.flat = True
 
-    def _set_goal(self, goal):
-
+    def _compute_goal(self, goal, task):
+        if self.flat:
+            task = self.tasks
+        else:
+            task = [task]
         desired_goal = np.zeros([self.dim_g])
-        if self.task == 0:  # 3D coordinates for the hand
-            tmp_goal = self.initial_gripper_xpos[:3] + goal * 0.15
-            tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
-            self.goal_to_render = tmp_goal.copy()
+        for t in task:
+            if t == 0:  # 3D coordinates for the hand
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * 0.15
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                self.goal_to_render = tmp_goal.copy()
 
-        elif self.task in [1, 2, 4]:  # 3D coordinates for object in 2D plane
-            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-            tmp_goal[2] = self.height_offset
-            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
-            self.goal_to_render = tmp_goal.copy()
+            elif t in [1, 2]:  # 3D coordinates for object in 2D plane
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                tmp_goal[2] = self.height_offset
+                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                self.goal_to_render = tmp_goal.copy()
 
-        elif self.task == 3:  # 3D coordinates for the object
-            # tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-            # tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            obs = self._get_obs()
-            tmp_goal = obs['observation'][6:9].copy()
-            tmp_goal[2] = self.height_offset + (goal[2] + 1.2) * 0.45 / 2.2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
-            self.goal_to_render = tmp_goal.copy()
+            elif t == 3:  # 3D coordinates for the object
+                # tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                # tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+                obs = self._get_obs()
+                tmp_goal = obs['observation'][6:9].copy()
+                tmp_goal[2] = self.height_offset + (goal[2] + 1.2) * 0.45 / 2.2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                self.goal_to_render = tmp_goal.copy()
+
+            elif t == 4:
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                tmp_goal[2] = self.height_offset + 0.05
+                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                self.goal_to_render = tmp_goal.copy()
 
 
-        self.goal = desired_goal
-        self.mask = np.zeros([self.n_tasks])
-        self.mask[self.task] = 1
+        mask = np.zeros([self.n_tasks])
+        if not self.flat:
+            mask[task[0]] = 1
+        return desired_goal, mask
 
     def _compute_achieved_goal(self, obs):
 
@@ -271,7 +278,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object2_pos = object2_rot = object2_velp = object2_velr = object2_rel_pos = np.zeros(0)
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-
         obs = np.concatenate([
             grip_pos, object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), gripper_state,
             object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), object0_velr.ravel(),
