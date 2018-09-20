@@ -53,7 +53,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # task 4: Stack Cube0 and Cube1 in given position (2D)
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [9, 10, 11], [3, 4, 5], [3, 4, 5, 6, 7, 8]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [9, 10, 11], [6, 7, 8], [3, 4, 5, 6, 7, 8]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
@@ -95,7 +95,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 if ind == self.tasks_g_id[i_t]:
                     good_task.append(i_t)
             assert len(good_task) == 1
-
             task = good_task[0]
 
             if task in [0, 1, 2, 3]:
@@ -184,6 +183,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         return obs
 
     def _set_task(self, t):
+        print(t)
         if not self.flat:
             self.task = t
 
@@ -199,7 +199,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task in [1, 2]:  # 3D coordinates for the object in 2D plane
+        elif self.task in [1, 2, 4]:  # 3D coordinates for object in 2D plane
             tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
             tmp_goal[2] = self.height_offset
             desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
@@ -214,11 +214,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
             self.goal_to_render = tmp_goal.copy()
 
-        elif self.task == 4:  # 3D coordinates for the two objects
-            tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-            tmp_goal[2] = self.height_offset
-            desired_goal[self.tasks_g_id[self.task]] = tmp_goal.copy()
-            self.goal_to_render = tmp_goal.copy()
 
         self.goal = desired_goal
         self.mask = np.zeros([self.n_tasks])
