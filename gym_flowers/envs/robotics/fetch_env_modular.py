@@ -240,11 +240,11 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 goal_to_render = tmp_goal.copy()
 
             elif t == 3:  # 3D coordinates for the object
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
-                # obs = self._get_obs()
-                # tmp_goal = obs['observation'][6:9].copy()
-                # tmp_goal[2] = self.height_offset + (goal[2] + 1.1) * 0.45 / 2.1  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+                # tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                # tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
+                obs = self._get_obs()
+                tmp_goal = obs['observation'][6:9].copy()
+                tmp_goal[2] = self.height_offset + (goal[2] + 1.1) * 0.45 / 2.1  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
@@ -272,7 +272,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
     def _update_goals(self, obs):
 
-        if self.task in [4]:
+        if self.task in [3, 4]:
             self.goal[self.tasks_g_id[self.task][:2]] = obs[6:8]
             self.goal_to_render = self.goal[self.tasks_g_id[self.task]].copy()
 
