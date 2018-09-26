@@ -134,7 +134,7 @@ for (reward_type, obs_type) in params_iterator:
             max_episode_steps=50,
     )
 
-grid_sizes = [10, 20]
+grid_sizes = [10, 20, 40, 80, 160]
 randomness = [False, True]
 params_iterator = list(itertools.product(grid_sizes, randomness))
 
