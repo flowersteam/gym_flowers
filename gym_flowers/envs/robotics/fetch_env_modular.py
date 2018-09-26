@@ -278,6 +278,11 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
 
     def _get_obs(self):
+        # add noise to object 2 position
+        object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
+        object2_qpos[:2] += np.random.randn(2) * 0.008
+        self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
@@ -320,6 +325,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object0_pos = object0_rot = object0_velp = object0_velr = object0_rel_pos = np.zeros(0)
             object1_pos = object1_rot = object1_velp = object1_velr = object1_rel_pos = np.zeros(0)
             object2_pos = object2_rot = object2_velp = object2_velr = object2_rel_pos = np.zeros(0)
+
+
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         obs = np.concatenate([
@@ -365,7 +372,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
             object2_xpos_init = np.array([1.7, 0.75])
-            object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+            object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
 
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
@@ -374,7 +381,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 object1_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
             # set third object's position
             while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
-                object2_xpos = object2_xpos_init + + np.array([np.random.uniform(-0.1, 0.1), np.random.uniform(-0.3, 0.3)])
+                object2_xpos = object2_xpos_init + np.array([np.random.uniform(-0.04, 0.04), np.random.uniform(-0.1, 0.1)])
 
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
