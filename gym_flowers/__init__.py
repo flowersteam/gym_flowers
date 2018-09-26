@@ -133,3 +133,23 @@ for (reward_type, obs_type) in params_iterator:
             kwargs=kwargs,
             max_episode_steps=50,
     )
+
+grid_sizes = [10, 20]
+randomness = [False, True]
+params_iterator = list(itertools.product(grid_sizes, randomness))
+
+for (grid_size, stochastic) in params_iterator:
+    suffix = 'v1' if stochastic else 'v0'
+    kwargs = {
+        'grid_size': grid_size,
+        'stochastic': stochastic,
+    }
+
+    # SquareDistractor
+
+    register(id=f'SquareDistractor{str(grid_size)}-{suffix}',
+             entry_point='gym_flowers.envs.flokoban:SquareDistractor',
+             max_episode_steps=50,
+             reward_threshold=1.0,
+             kwargs=kwargs,
+             )
