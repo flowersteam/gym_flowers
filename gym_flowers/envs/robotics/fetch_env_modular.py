@@ -283,7 +283,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         for i in range(self.n_distractors):
             qpos_init = object_qpos_init[i].copy()
             qpos_final = qpos_init.copy()
-            print(qpos_final[2])
             qpos_final[:2] += np.random.uniform(-0.005, 0.005, 2)
             test = True
             for j in range(self.n_distractors):
@@ -303,53 +302,41 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         grip_velp = self.sim.data.get_site_xvelp('robot0:grip') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
+        objects_pos = []
+        objects_rot = []
+        objects_velp = []
+        objects_velr = []
+        objects_rel_pos = []
         if self.has_object:
-            # object 0
-            object0_pos = self.sim.data.get_site_xpos('object0')
-            # rotations
-            object0_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object0'))
-            # velocities
-            object0_velp = self.sim.data.get_site_xvelp('object0') * dt
-            object0_velr = self.sim.data.get_site_xvelr('object0') * dt
-            # gripper state
-            object0_rel_pos = object0_pos - grip_pos
-            object0_velp -= grip_velp
-
-            # object 1
-            object1_pos = self.sim.data.get_site_xpos('object1')
-            # rotations
-            object1_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object1'))
-            # velocities
-            object1_velp = self.sim.data.get_site_xvelp('object1') * dt
-            object1_velr = self.sim.data.get_site_xvelr('object1') * dt
-            # gripper state
-            object1_rel_pos = object1_pos - grip_pos
-            object1_velp -= grip_velp
-
-            # object 2
-            object2_pos = self.sim.data.get_site_xpos('object2')
-            # rotations
-            object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))
-            # velocities
-            object2_velp = self.sim.data.get_site_xvelp('object2') * dt
-            object2_velr = self.sim.data.get_site_xvelr('object2') * dt
-            # gripper state
-            object2_rel_pos = object2_pos - grip_pos
-            object2_velp -= grip_velp
+            # objects
+            for i in range(self.n_distractors + 2):
+                objects_pos.append(self.sim.data.get_site_xpos('object' + str(i)))
+                # rotations
+                objects_rot.append(rotations.mat2euler(self.sim.data.get_site_xmat('object' + str(i))))
+                # velocities
+                objects_velp.append(self.sim.data.get_site_xvelp('object' + str(i)) * dt)
+                objects_velr.append(self.sim.data.get_site_xvelr('object' + str(i)) * dt)
+                # gripper state
+                objects_rel_pos.append(objects_pos[-1].copy() - grip_pos)
+                objects_velp[-1] -= grip_velp
         else:
-            object0_pos = object0_rot = object0_velp = object0_velr = object0_rel_pos = np.zeros(0)
-            object1_pos = object1_rot = object1_velp = object1_velr = object1_rel_pos = np.zeros(0)
-            object2_pos = object2_rot = object2_velp = object2_velr = object2_rel_pos = np.zeros(0)
+            objects_pos = [np.zeros(0) for _ in range(self.n_distractors + 2)]
+            objects_rot = [np.zeros(0) for _ in range(self.n_distractors + 2)]
+            objects_velp = [np.zeros(0) for _ in range(self.n_distractors + 2)]
+            objects_velr = [np.zeros(0) for _ in range(self.n_distractors + 2)]
+            objects_rel_pos = [np.zeros(0) for _ in range(self.n_distractors + 2)]
 
+        objects_pos = np.array(objects_pos)
+        objects_rot = np.array(objects_rot)
+        objects_velp = np.array(objects_velp)
+        objects_velr = np.array(objects_velr)
+        objects_rel_pos = np.array(objects_rel_pos)
 
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-        obs = np.concatenate([
-            grip_pos, object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), gripper_state,
-            object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), object0_velr.ravel(),
-            object1_velr.ravel(), object2_velr.ravel(), grip_velp,
-            gripper_vel,
-        ])
+        obs = np.concatenate([grip_pos, objects_pos.ravel(), objects_rel_pos.ravel(), gripper_state, objects_rot.ravel(), objects_velp.ravel(),
+                              objects_velr.ravel(), grip_velp, gripper_vel])
+
         self._update_goals(obs)
         if not self.has_object:
             achieved_goal = grip_pos.copy()
