@@ -447,7 +447,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # Extract information for sampling goals.
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
         if self.has_object:
-            self.height_offset = self.sim.data.get_site_xpos('object1')[2]
+            self.height_offset = 0.42599
 
 
     @property
