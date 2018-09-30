@@ -9,7 +9,7 @@ register(id='Reacher{}-v0'.format(2),
          reward_threshold=1.0
          )
 
-for n_dist in range(4):
+for n_dist in range(5):
     n_tasks = 4 + n_dist
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))

@@ -52,7 +52,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17], [18, 19, 20]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
@@ -381,11 +381,12 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             # while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
             #     object2_xpos = object2_xpos_init + np.array([np.random.uniform(-0.04, 0.04), np.random.uniform(-0.1, 0.1)])
 
-
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
             assert object0_qpos.shape == (7,)
             assert object1_qpos.shape == (7,)
+            object0_qpos[2] = 0.42599
+            object1_qpos[2] = 0.42599
             object0_qpos[:2] = object0_xpos
             object1_qpos[:2] = object1_xpos
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
@@ -408,6 +409,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 object_qpos = self.sim.data.get_joint_qpos('object'+str(i_dist + 2)+':joint')
                 assert object_qpos.shape == (7,)
                 object_qpos[:2] = object_xpos
+                object_qpos[2] = 0.42599
                 self.sim.data.set_joint_qpos('object'+str(i_dist + 2)+':joint', object_qpos)
 
 
@@ -445,7 +447,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # Extract information for sampling goals.
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
         if self.has_object:
-            self.height_offset = self.sim.data.get_site_xpos('object0')[2]
+            self.height_offset = self.sim.data.get_site_xpos('object1')[2]
+
 
     @property
     def nb_tasks(self):
