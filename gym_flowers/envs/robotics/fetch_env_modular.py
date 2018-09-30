@@ -110,7 +110,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 assert len(good_task) == 1
                 task = good_task[0]
 
-                if task in [0, 1, 2, 4]:
+                if task in [0, 1, 2, 4, 5, 6, 7]:
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[self.tasks_ag_id[task]], goal[self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
@@ -155,7 +155,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                     assert len(good_task) == 1
                     task = good_task[0]
 
-                    if task in [0, 1, 2, 4]:
+                    if task in [0, 1, 2, 4, 5, 6, 7]:
                         # Compute distance between goal and the achieved goal.
                         d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
                         if self.reward_type == 'sparse':
@@ -232,7 +232,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t in [1, 4]:  # 3D coordinates for object in 2D plane
+            elif t in [1, 4, 5, 6, 7]:  # 3D coordinates for object in 2D plane
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
                 tmp_goal[2] = self.height_offset
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
@@ -277,10 +277,26 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
 
     def _get_obs(self):
-        # add noise to object 2 position
-        object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
-        object2_qpos[:2] += np.random.randn(2) * 0.008
-        self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+        # add noise to distracting objects
+        object_qpos_init = [self.sim.data.get_joint_qpos('object'+str(i+2)+':joint') for i in range(self.n_distractors)]
+        object_qpos_final = []
+        for i in range(self.n_distractors):
+            qpos_init = object_qpos_init[i].copy()
+            qpos_final = qpos_init.copy()
+            print(qpos_final[2])
+            qpos_final[:2] += np.random.uniform(-0.005, 0.005, 2)
+            test = True
+            for j in range(self.n_distractors):
+                if i > j:
+                    test = test and np.linalg.norm(qpos_final[:2]  - object_qpos_final[j][:2]) > 0.05
+                elif i < j:
+                    test = test and np.linalg.norm(qpos_final[:2] - object_qpos_init[j][:2]) > 0.05
+            if test:
+                object_qpos_final.append(qpos_final)
+            else:
+                object_qpos_final.append(qpos_init)
+
+            self.sim.data.set_joint_qpos('object'+str(i+2)+':joint', object_qpos_final[i].copy())
 
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
