@@ -13,11 +13,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
     """Superclass for all Fetch environments.
     """
 
-    def __init__(
-        self, model_path, n_substeps, gripper_extra_height, block_gripper,
-        has_object, target_in_the_air, target_offset, obj_range, target_range,
-        distance_threshold, initial_qpos, reward_type, tasks
-    ):
+    def __init__(self, model_path, n_substeps, gripper_extra_height, block_gripper, has_object, target_in_the_air, target_offset,
+                 obj_range, target_range, distance_threshold, initial_qpos, reward_type, tasks, n_distractors):
         """Initializes a new Fetch environment.
 
         Args:
@@ -44,23 +41,25 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         self.distance_threshold = distance_threshold
         self.reward_type = reward_type
         self.n_timesteps = 50
+        self.n_distractors = n_distractors
 
         # define the different tasks
         # task 0: Hand position (3D)
         # task 1: Cube1 position (2D)
-        # task 2: Cube2 position (2D)
-        # task 3: Cube1 position (3D above Cube0)
-        # task 4: Stack Cube1 over Cube0 in given position (2D)
+        # task 2: Cube1 position (3D above Cube0)
+        # task 3: Stack Cube1 over Cube0 in given position (2D)
+        # task 4: Cube2 position (2D)
+
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [9, 10, 11], [3, 4, 5], [3, 4, 5, 0, 1, 2]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
         self.tasks_id = []
         self.tasks_g_id = []
         self.tasks_ag_id = []
-        for i in range(0,self.n_tasks):
+        for i in range(self.n_tasks):
             self.tasks_ag_id.append(list(range(ind_ag, ind_ag + len(self.tasks_obs_id[i]))))
             ind_ag += len(self.tasks_obs_id[i])
             self.tasks_g_id.append(list(range(ind_g, ind_g + 3)))
@@ -111,7 +110,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 assert len(good_task) == 1
                 task = good_task[0]
 
-                if task in [0, 1, 2, 3]:
+                if task in [0, 1, 2, 4]:
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[self.tasks_ag_id[task]], goal[self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
@@ -119,7 +118,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                     else:
                         r = - d
 
-                elif task == 4:
+                elif task == 3:
                     dcube = goal_distance(achieved_goal[self.tasks_ag_id[task][:3]], goal[self.tasks_g_id[task]])
                     dgrip = goal_distance(achieved_goal[self.tasks_ag_id[task][3:]], goal[self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
@@ -156,7 +155,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                     assert len(good_task) == 1
                     task = good_task[0]
 
-                    if task in [0, 1, 2, 3]:
+                    if task in [0, 1, 2, 4]:
                         # Compute distance between goal and the achieved goal.
                         d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
                         if self.reward_type == 'sparse':
@@ -164,7 +163,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                         else:
                             r[i_g] = -d
 
-                    elif task == 4:
+                    elif task == 3:
                         dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
                         dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
                         if self.reward_type == 'sparse':
@@ -233,13 +232,13 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t in [1, 2]:  # 3D coordinates for object in 2D plane
+            elif t in [1, 4]:  # 3D coordinates for object in 2D plane
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
                 tmp_goal[2] = self.height_offset
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 3:  # 3D coordinates for the object
+            elif t == 2:  # 3D coordinates for the object
                 # tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
                 # tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
                 obs = self._get_obs()
@@ -248,7 +247,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 4:
+            elif t == 3:
                 obs = self._get_obs()
                 tmp_goal = obs['observation'][6:9].copy()
                 tmp_goal[2] = self.height_offset + 0.05  # mapping in -1,1 to 0,0.45 #self.np_random.uniform(0, 0.45)
@@ -272,7 +271,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
     def _update_goals(self, obs):
 
-        if self.task in [3, 4]:
+        if self.task in [2, 3]:
             self.goal[self.tasks_g_id[self.task][:2]] = obs[6:8]
             self.goal_to_render = self.goal[self.tasks_g_id[self.task]].copy()
 
