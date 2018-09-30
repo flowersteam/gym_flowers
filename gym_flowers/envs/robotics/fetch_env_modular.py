@@ -52,7 +52,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
@@ -370,8 +370,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         if self.has_object:
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
-            object2_xpos_init = np.array([1.7, 0.75])
-            object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
+
 
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
@@ -379,21 +378,38 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             while np.linalg.norm(object1_xpos - self.initial_gripper_xpos[:2]) < 0.1 or np.linalg.norm(object1_xpos - object0_xpos) < 0.1:
                 object1_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
             # set third object's position
-            while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
-                object2_xpos = object2_xpos_init + np.array([np.random.uniform(-0.04, 0.04), np.random.uniform(-0.1, 0.1)])
+            # while np.linalg.norm(object2_xpos - object1_xpos) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1:
+            #     object2_xpos = object2_xpos_init + np.array([np.random.uniform(-0.04, 0.04), np.random.uniform(-0.1, 0.1)])
+
 
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
-            object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
             assert object0_qpos.shape == (7,)
             assert object1_qpos.shape == (7,)
-            assert object2_qpos.shape == (7,)
             object0_qpos[:2] = object0_xpos
             object1_qpos[:2] = object1_xpos
-            object2_qpos[:2] = object2_xpos
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
-            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+
+
+            dist_objects_xpos = []
+            for i_dist in range(self.n_distractors):
+                object_xpos_init = np.array([1.75 + 0.12 * i_dist, 0.55 + 0.15 * i_dist])
+                pos = object_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
+                if i_dist > 0:
+                    test = False
+                    while not test:
+                        pos = object_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
+                        test = True
+                        for j in range(i_dist):
+                            test = test and np.linalg.norm(pos - dist_objects_xpos[j]) > 0.05
+                dist_objects_xpos.append(pos.copy())
+                object_xpos = pos.copy()
+                object_qpos = self.sim.data.get_joint_qpos('object'+str(i_dist + 2)+':joint')
+                assert object_qpos.shape == (7,)
+                object_qpos[:2] = object_xpos
+                self.sim.data.set_joint_qpos('object'+str(i_dist + 2)+':joint', object_qpos)
+
 
         self.sim.forward()
         return True
