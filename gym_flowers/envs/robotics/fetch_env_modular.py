@@ -334,8 +334,9 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-        obs = np.concatenate([grip_pos, objects_pos.ravel(), objects_rel_pos.ravel(), gripper_state, objects_rot.ravel(), objects_velp.ravel(),
-                              objects_velr.ravel(), grip_velp, gripper_vel])
+        # obs = np.concatenate([grip_pos, objects_pos.ravel(), objects_rel_pos.ravel(), gripper_state, objects_rot.ravel(), objects_velp.ravel(),
+        #                       objects_velr.ravel(), grip_velp, gripper_vel])
+        obs = np.concatenate([grip_pos, objects_pos.ravel(), objects_rel_pos.ravel(), gripper_state, objects_rot.ravel(), grip_velp, gripper_vel])
 
         self._update_goals(obs)
         if not self.has_object:
