@@ -287,20 +287,20 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
         while la.norm(tmp - object3_qpos[:2]) < 0.05 or la.norm(tmp - object4_qpos[:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
-        object2_qpos[:2] = tmp
-        self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+        object2_qpos[:2] = tmp.copy()
+        self.sim.data.set_joint_qpos('object2:joint', object2_qpos.copy())
 
         tmp = object3_qpos[:2].copy() + np.random.randn(2) * 0.005
         while la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - object4_qpos[:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05:
             tmp = object3_qpos[:2].copy() + np.random.randn(2) * 0.005
-        object3_qpos[:2] = tmp
-        self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
+        object3_qpos[:2] = tmp.copy()
+        self.sim.data.set_joint_qpos('object3:joint', object3_qpos.copy())
 
         tmp = object4_qpos[:2].copy() + np.random.randn(2) * 0.005
         while la.norm(tmp - object3_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05:
             tmp = object4_qpos[:2].copy() + np.random.randn(2) * 0.005
-        object4_qpos[:2] = tmp
-        self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
+        object4_qpos[:2] = tmp.copy()
+        self.sim.data.set_joint_qpos('object4:joint', object4_qpos.copy())
 
 
         # positions
@@ -374,20 +374,20 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-        # obs = np.concatenate([grip_pos,
-        #                       object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object3_pos.ravel(), object4_pos.ravel(),
-        #                       object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), object3_rel_pos.ravel(), object4_rel_pos.ravel(),
-        #                       object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), object3_rot.ravel(), object4_rot.ravel(),
-        #                       object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), object3_velp.ravel(), object4_velp.ravel(),
-        #                       object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(), object3_velr.ravel(), object4_velr.ravel(),
-        #                       grip_velp, gripper_vel, gripper_state])
         obs = np.concatenate([grip_pos,
-                              object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),# object3_pos.ravel(), object4_pos.ravel(),
-                              object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), #object3_rel_pos.ravel(), object4_rel_pos.ravel(),
-                              object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), object4_rot.ravel(),
-                              object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), #object3_velp.ravel(), object4_velp.ravel(),
-                              object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(), #object3_velr.ravel(), object4_velr.ravel(),
+                              object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object3_pos.ravel(), object4_pos.ravel(),
+                              object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), object3_rel_pos.ravel(), object4_rel_pos.ravel(),
+                              object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), object3_rot.ravel(), object4_rot.ravel(),
+                              object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), object3_velp.ravel(), object4_velp.ravel(),
+                              object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(), object3_velr.ravel(), object4_velr.ravel(),
                               grip_velp, gripper_vel, gripper_state])
+        # obs = np.concatenate([grip_pos,
+        #                       object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),# object3_pos.ravel(), object4_pos.ravel(),
+        #                       object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), #object3_rel_pos.ravel(), object4_rel_pos.ravel(),
+        #                       object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), object4_rot.ravel(),
+        #                       object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(), #object3_velp.ravel(), object4_velp.ravel(),
+        #                       object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(), #object3_velr.ravel(), object4_velr.ravel(),
+        #                       grip_velp, gripper_vel, gripper_state])
         self._update_goals(obs)
         if not self.has_object:
             achieved_goal = grip_pos.copy()
@@ -424,9 +424,9 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         if self.has_object:
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
-            object2_xpos_init = np.array([1.75, 0.6])
+            object2_xpos_init = np.array([2, 0.65])
             object3_xpos_init = np.array([1.9, 0.8])
-            object4_xpos_init = np.array([2.1, 0.95])
+            object4_xpos_init = np.array([2., 0.9])
 
             object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02)])
             object3_xpos = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02)])
@@ -452,13 +452,17 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object0_qpos[-3:] = 0
             object0_qpos[2] = self.height_offset
             object1_qpos[:2] = object1_xpos
+            object1_qpos[-3:] = 0
             object1_qpos[2] = self.height_offset
             object2_qpos[:2] = object2_xpos
             object2_qpos[2] = self.height_offset
+            object2_qpos[-3:] = 0
             object3_qpos[:2] = object3_xpos
             object3_qpos[2] = self.height_offset
+            object3_qpos[-3:] = 0
             object4_qpos[:2] = object4_xpos
             object4_qpos[2] = self.height_offset
+            object4_qpos[-3:] = 0
 
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
@@ -500,7 +504,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # Extract information for sampling goals.
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
         if self.has_object:
-            self.height_offset = self.sim.data.get_site_xpos('object1')[2].copy()
+            self.height_offset = 0.42599082 #self.sim.data.get_site_xpos('object1')[2].copy()
 
     @property
     def nb_tasks(self):
