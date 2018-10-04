@@ -129,7 +129,7 @@ for (grid_size, stochastic) in params_iterator:
 
     # SquareDistractor
 
-    register(id='SquareDistractor'+str(grid_size)+'-'+suffix',
+    register(id='SquareDistractor'+str(grid_size)+'-'+suffix,
              entry_point='gym_flowers.envs.flokoban:SquareDistractor',
              max_episode_steps=50,
              reward_threshold=1.0,
