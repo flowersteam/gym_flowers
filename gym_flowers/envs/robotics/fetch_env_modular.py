@@ -336,8 +336,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         # obs = np.concatenate([grip_pos, objects_pos[:3,:].ravel(), objects_rel_pos[:3,:].ravel(), gripper_state, objects_rot[:3,:].ravel(), objects_velp[:3,:].ravel(),
         #                       objects_velr[:3,:].ravel(), grip_velp, gripper_vel])
-        obs = np.concatenate([grip_pos, objects_pos[:3, :].ravel(), objects_rel_pos.ravel(), gripper_state, objects_rot.ravel(), objects_velp.ravel(),
-                              objects_velr.ravel(), grip_velp, gripper_vel])
+        obs = np.concatenate([grip_pos, objects_pos[:3, :].ravel(), objects_rel_pos[:3, :].ravel(), gripper_state, objects_rot[:3, :].ravel(), objects_velp[:3, :].ravel(),
+                              objects_velr[:3, :].ravel(), grip_velp, gripper_vel])
 
         self._update_goals(obs)
         if not self.has_object:
@@ -392,8 +392,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             assert object1_qpos.shape == (7,)
             object0_qpos[:2] = object0_xpos
             object1_qpos[:2] = object1_xpos
-            object0_qpos[2] = 0.42599
-            object1_qpos[2] = 0.42599
+            object0_qpos[2] = self.height_offset#0.42699
+            object1_qpos[2] = self.height_offset#0.42699
             object0_qpos[-3] = 0
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
@@ -415,7 +415,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 object_qpos = self.sim.data.get_joint_qpos('object'+str(i_dist + 2)+':joint')
                 assert object_qpos.shape == (7,)
                 object_qpos[:2] = object_xpos
-                object_qpos[2] = 0.42599
+                object_qpos[2] = self.height_offset#0.42699
                 self.sim.data.set_joint_qpos('object'+str(i_dist + 2)+':joint', object_qpos)
 
 
@@ -453,7 +453,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # Extract information for sampling goals.
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
         if self.has_object:
-            self.height_offset = 0.42599
+            self.height_offset = self.sim.data.get_joint_qpos('object1:joint')[2]
 
 
     @property
