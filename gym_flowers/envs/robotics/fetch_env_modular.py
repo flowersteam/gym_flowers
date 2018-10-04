@@ -15,7 +15,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
     """
 
     def __init__(self, model_path, n_substeps, gripper_extra_height, block_gripper, has_object, target_in_the_air, target_offset,
-                 obj_range, target_range, distance_threshold, initial_qpos, reward_type, tasks, n_distractors):
+                 obj_range, target_range, distance_threshold, initial_qpos, reward_type, tasks):
         """Initializes a new Fetch environment.
 
         Args:
@@ -42,7 +42,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         self.distance_threshold = distance_threshold
         self.reward_type = reward_type
         self.n_timesteps = 50
-        self.n_distractors = n_distractors
 
         # define the different tasks
         # task 0: Hand position (3D)
@@ -52,7 +51,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # task 4: Cube2 position (2D)
 
         self.tasks = tasks
-        self.n_tasks = len(self.tasks)
+        self.n_tasks = 5#len(self.tasks)
         self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
