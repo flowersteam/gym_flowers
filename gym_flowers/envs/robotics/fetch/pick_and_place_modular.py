@@ -9,7 +9,7 @@ class ModularFetchPickAndPlaceEnv(fetch_env_modular.ModularFetchEnv, utils.EzPic
             'robot0:slide1': 0.48,
             'robot0:slide2': 0.0,
         }
-        for i in range(1 + 2):
+        for i in range(n_distractors + 2):
             initial_qpos['object'+str(i)+':joint'] = [2.25, 0.53, 0.45, 1., 0., 0., 0.]
         fetch_env_modular.ModularFetchEnv.__init__(
             self, 'fetch/pick_and_place_modular.xml', has_object=True, block_gripper=False, n_substeps=20,
