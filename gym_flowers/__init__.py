@@ -9,7 +9,8 @@ register(id='Reacher{}-v0'.format(2),
          reward_threshold=1.0
          )
 
-for n_tasks in range(1,6):
+for n_dist in range(4):
+    n_tasks = 4 + n_dist
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))
     for reward_type in ['sparse', 'dense']:
@@ -17,25 +18,8 @@ for n_tasks in range(1,6):
             suffix += 'Dense'
         kwargs = {
             'reward_type': reward_type,
-            'tasks': tasks
-        }
-        register(
-            id='ModularFetch{}-v1'.format(suffix),
-            entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv2',
-            kwargs=kwargs,
-            max_episode_steps=50,
-        )
-
-
-for n_tasks in range(1,6):
-    suffix = str(n_tasks)
-    tasks = list(range(n_tasks))
-    for reward_type in ['sparse', 'dense']:
-        if reward_type == 'dense':
-            suffix += 'Dense'
-        kwargs = {
-            'reward_type': reward_type,
-            'tasks': tasks
+            'tasks': tasks,
+            'n_distractors': n_dist
         }
         register(
             id='ModularFetch{}-v0'.format(suffix),
@@ -43,8 +27,6 @@ for n_tasks in range(1,6):
             kwargs=kwargs,
             max_episode_steps=50,
         )
-
-
 
 
 tasks = ['0','1','2','02','01','012']
