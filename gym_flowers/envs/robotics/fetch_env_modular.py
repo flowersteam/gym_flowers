@@ -51,7 +51,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # task 4: Cube2 position (2D)
 
         self.tasks = tasks
-        self.n_tasks = 5#len(self.tasks)
+        self.n_tasks = len(self.tasks)
         self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
