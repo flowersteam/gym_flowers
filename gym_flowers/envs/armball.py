@@ -267,7 +267,7 @@ class ArmBall(gym.GoalEnv):
             # self._rendering = -self._rendering + 1
 
         if mode == 'rgb_array':
-            return self._rendering  # return RGB frame suitable for video
+            return (self._rendering * 255).astype(np.uint8)  # return RGB frame suitable for video
         elif mode is 'human':
 
             if self.viewer is None:
@@ -308,7 +308,7 @@ class ArmBalls(gym.GoalEnv):
     def __init__(self, arm_lengths=np.array([0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05]),
                  object_initial_pos=np.array([0.6, 0.6]), object_size=0.1,
                  distract_initial_pose=np.array([0.7, -0.45]), distract_size=0.15, distract_noise=0.2, n_timesteps=50,
-                 epsilon=0.05, action_scaling=10, reward_type='sparse', one_goal=False, env_noise=0, obs_type='xyz'):
+                 epsilon=0.05, action_scaling=30, reward_type='sparse', one_goal=False, env_noise=0, obs_type='xyz'):
         """Initializes a new ArmBalls environment.
 
             This environment is similar to ArmBall except that there is a another ball (distractor) that cannot be
@@ -571,25 +571,25 @@ class ArmBalls(gym.GoalEnv):
         objt.draw(surface)
 
         # Drawing distractor
-        objt = gizeh.circle(r=self._distract_size * world2screen,
+        distractor = gizeh.circle(r=self._distract_size * world2screen,
                             xy=(screen_center_w + distract_pos[0] * world2screen,
                                 screen_center_h + distract_pos[1] * world2screen),
                             fill=(0, 0, 1))
-        objt.draw(surface)
+        distractor.draw(surface)
 
         # Drawing goal
-        objt = gizeh.circle(r=self._epsilon * world2screen,
+        goal = gizeh.circle(r=self._epsilon * world2screen,
                             xy=(screen_center_w + self.desired_goal[0] * world2screen,
                                 screen_center_h + self.desired_goal[1] * world2screen),
                             fill=(1, 0, 0))
-        objt.draw(surface)
+        goal.draw(surface)
 
         # Drawing hand
-        objt = gizeh.circle(r=self._object_size * world2screen / 4,
+        hand = gizeh.circle(r=self._object_size * world2screen / 4,
                             xy=(screen_center_w + hand_pos[0] * world2screen,
                                 screen_center_h + hand_pos[1] * world2screen),
                             fill=(1, 0, 1))
-        objt.draw(surface)
+        hand.draw(surface)
 
         # Drawing arm
         screen_arm_points = arm_points * world2screen
@@ -627,7 +627,7 @@ class ArmBalls(gym.GoalEnv):
 
         self._calc_rendering(width=self._width, height=self._height)
         if mode == 'rgb_array':
-            return self._rendering  # return RGB frame suitable for video
+            return (self._rendering * 255).astype(np.uint8)  # return RGB frame suitable for video
         elif mode is 'human':
 
             if self.viewer is None:
