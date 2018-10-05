@@ -72,8 +72,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         self.task = 0
 
         self.info = dict(is_success=0)
-        self.object3_xpos = np.zeros([3])
-        self.object4_xpos = np.ones([3])
+        # self.object3_xpos = np.zeros([3])
+        # self.object4_xpos = np.ones([3])
 
         if model_path.startswith('/'):
             model_path = model_path
@@ -309,27 +309,27 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         object2_qpos[:2] = tmp.copy()
         self.sim.data.set_joint_qpos('object2:joint', object2_qpos.copy())
 
-        tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
-        i=1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
-                0.05:
-            tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = self.object3_xpos[:2].copy()
-                break
-        self.object3_xpos[:2] = tmp.copy()
-
-        tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
-        i = 1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
-                0.05:
-            tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = self.object3_xpos[:2].copy()
-                break
-        self.object4_xpos[:2] = tmp.copy()
+        # tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
+        # i=1
+        # while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
+        #         0.05:
+        #     tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
+        #     i += 1
+        #     if i == 100:
+        #         tmp = self.object3_xpos[:2].copy()
+        #         break
+        # self.object3_xpos[:2] = tmp.copy()
+        #
+        # tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
+        # i = 1
+        # while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
+        #         0.05:
+        #     tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
+        #     i += 1
+        #     if i == 100:
+        #         tmp = self.object3_xpos[:2].copy()
+        #         break
+        # self.object4_xpos[:2] = tmp.copy()
 
         # tmp = object3_qpos[:2].copy() + np.random.randn(2) * 0.005
         # while la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05:
@@ -418,7 +418,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         if self.n_tasks == 7:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), #object3_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), np.zeros([6]),#self.object3_xpos.squeeze(), self.object4_xpos.squeeze(),
+                                  # #object3_pos.ravel(),
                                   # #object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), #object3_rel_pos.ravel(), object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), object4_rot.ravel(),
@@ -427,7 +428,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                                   grip_velp, gripper_vel, gripper_state])
         elif self.n_tasks == 6:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(),#object4_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), np.zeros([3]), #self.object3_xpos.squeeze(),#object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),# object3_rel_pos.ravel(), #object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), #object4_rot.ravel(),
                                   object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(),# object3_velp.ravel(), #object4_velp.ravel(),
@@ -480,12 +481,12 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
             object2_xpos_init = np.array([2, 0.65])
-            self.object3_xpos_init = np.array([1.9, 0.8, self.height_offset])
-            self.object4_xpos_init = np.array([2., 0.9,  self.height_offset])
+            # self.object3_xpos_init = np.array([1.9, 0.8, self.height_offset])
+            # self.object4_xpos_init = np.array([2., 0.9,  self.height_offset])
 
             object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02)])
-            self.object3_xpos = self.object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            self.object4_xpos = self.object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            # self.object3_xpos = self.object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            # self.object4_xpos = self.object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
 
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
