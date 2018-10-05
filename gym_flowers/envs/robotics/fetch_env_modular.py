@@ -51,7 +51,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # task 4: Cube2 position (2D)
 
         self.tasks = tasks
-        self.n_tasks = 5#len(self.tasks)
+        self.n_tasks = len(self.tasks)
         self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17]]
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
@@ -418,7 +418,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         if self.n_tasks == 7:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), #object3_pos.ravel(), #object4_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), #object3_pos.ravel(),
+                                  # #object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(), #object3_rel_pos.ravel(), object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), object4_rot.ravel(),
                                   object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(),# object3_velp.ravel(), object4_velp.ravel(),
@@ -426,7 +427,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                                   grip_velp, gripper_vel, gripper_state])
         elif self.n_tasks == 6:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), object3_pos.ravel(), #object4_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(),#object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),# object3_rel_pos.ravel(), #object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(), #object3_rot.ravel(), #object4_rot.ravel(),
                                   object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(),# object3_velp.ravel(), #object4_velp.ravel(),
