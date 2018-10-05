@@ -298,22 +298,37 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # self.sim.data.set_joint_qpos('object3:joint', object3_qpos.copy())
 
         tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
+        i = 1
         while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[
-                                                                                                                                                               :2]) < 0.05:
+                                                                                                                                                              :2]) < 0.05:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
+            i += 1
+            if i == 100:
+                tmp = self.object3_xpos[:2].copy()
+                break
         object2_qpos[:2] = tmp.copy()
         self.sim.data.set_joint_qpos('object2:joint', object2_qpos.copy())
 
         tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
+        i=1
         while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
                 0.05:
             tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
+            i += 1
+            if i == 100:
+                tmp = self.object3_xpos[:2].copy()
+                break
         self.object3_xpos[:2] = tmp.copy()
 
         tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
+        i = 1
         while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
                 0.05:
             tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
+            i += 1
+            if i == 100:
+                tmp = self.object3_xpos[:2].copy()
+                break
         self.object4_xpos[:2] = tmp.copy()
 
         # tmp = object3_qpos[:2].copy() + np.random.randn(2) * 0.005
