@@ -298,20 +298,20 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # self.sim.data.set_joint_qpos('object3:joint', object3_qpos.copy())
 
         tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_qpos[
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[
                                                                                                                                                                :2]) < 0.05:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
         object2_qpos[:2] = tmp.copy()
         self.sim.data.set_joint_qpos('object2:joint', object2_qpos.copy())
 
         tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_qpos[:2]) < \
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
                 0.05:
             tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
         self.object3_xpos[:2] = tmp.copy()
 
         tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_qpos[:2]) < \
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
                 0.05:
             tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
         self.object4_xpos[:2] = tmp.copy()
@@ -419,7 +419,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                                   grip_velp, gripper_vel, gripper_state])
         elif self.n_tasks == 5:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), #self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), # object3_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), # object3_pos.ravel(),
                                  # object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),  # object3_rel_pos.ravel(), object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(),  # object3_rot.ravel(), object4_rot.ravel(),
