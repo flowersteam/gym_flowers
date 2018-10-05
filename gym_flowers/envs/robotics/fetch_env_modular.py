@@ -73,7 +73,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         self.info = dict(is_success=0)
         self.object3_xpos = np.zeros([3])
-        self.object4_xpos = np.zeros([3])
+        self.object4_xpos = np.ones([3])
 
         if model_path.startswith('/'):
             model_path = model_path
@@ -419,7 +419,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                                   grip_velp, gripper_vel, gripper_state])
         elif self.n_tasks == 5:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), # self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), # object3_pos.ravel(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),  self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), # object3_pos.ravel(),
                                  # object4_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),  # object3_rel_pos.ravel(), object4_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(),  # object3_rot.ravel(), object4_rot.ravel(),
@@ -465,7 +465,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             object1_xpos = self.initial_gripper_xpos[:2]
             object2_xpos_init = np.array([2, 0.65])
             self.object3_xpos_init = np.array([1.9, 0.8, self.height_offset])
-            self.object4_xpos_init = np.array([2., 0.9])
+            self.object4_xpos_init = np.array([2., 0.9,  self.height_offset])
 
             object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02)])
             self.object3_xpos = self.object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
