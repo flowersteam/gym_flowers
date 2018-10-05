@@ -303,7 +303,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
-                tmp = self.object3_xpos[:2].copy()
+                tmp = object2_qpos[:2].copy()
                 break
         object2_qpos[:2] = tmp.copy()
         self.sim.data.set_joint_qpos('object2:joint', object2_qpos.copy())
@@ -326,7 +326,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
-                tmp = self.object3_xpos[:2].copy()
+                tmp = self.object4_xpos[:2].copy()
                 break
         self.object4_xpos[:2] = tmp.copy()
 
