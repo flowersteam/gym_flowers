@@ -299,8 +299,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
         tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
         i = 1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[
-                                                                                                                                                              :2]) < 0.05:
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05:# or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[
+                                                                                            #                                                                  :2]) < 0.05:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
