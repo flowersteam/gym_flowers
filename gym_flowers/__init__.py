@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-for n_dist in range(4):
+for n_dist in range(5):
     n_tasks = 4 + n_dist
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))
@@ -99,7 +99,6 @@ for (reward_type, obs_type) in params_iterator:
     }
 
     # ArmBalls
-
     register(
             id='ArmBalls{}-v0'.format(suffix),
             entry_point='gym_flowers.envs.armball:ArmBalls',

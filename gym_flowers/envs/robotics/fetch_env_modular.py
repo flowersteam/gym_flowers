@@ -59,6 +59,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         # indices of relevant object position (achieved_goal)
         # the achieved goal for the stacking task (T3) contains the gripper coordinate, as it is necessary to compute the reward (has to be far from the goal)
         self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17]]
+
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
         ind_ag = 0
@@ -127,6 +128,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 task = good_task[0]
 
                 if task in [0, 1, 2, 4, 5, 6]:
+
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
@@ -141,7 +143,6 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                         r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold).astype(np.float32))
                     else:
                         r[i_g] = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
-
         return r.reshape([r.size, 1])
 
 
@@ -281,11 +282,17 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
                 break
         self.object4_xpos[:2] = tmp.copy()
 
+
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         grip_velp = self.sim.data.get_site_xvelp('robot0:grip') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
+        objects_pos = []
+        objects_rot = []
+        objects_velp = []
+        objects_velr = []
+        objects_rel_pos = []
         if self.has_object:
             # object 0
             object0_pos = self.sim.data.get_site_xpos('object0')
@@ -390,6 +397,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             self.object3_xpos = self.object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
             self.object4_xpos = self.object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
 
+
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
                 object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
             # set second object's position
@@ -398,10 +406,8 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
             object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
             object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
-            object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
             assert object0_qpos.shape == (7,)
             assert object1_qpos.shape == (7,)
-            assert object2_qpos.shape == (7,)
             object0_qpos[:2] = object0_xpos
             object0_qpos[-3:] = 0
             object0_qpos[2] = self.height_offset
@@ -414,7 +420,27 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
 
             self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
-            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+
+
+            dist_objects_xpos = []
+            for i_dist in range(self.n_distractors):
+                object_xpos_init = np.array([1.75 + 0.12 * i_dist, 0.55 + 0.15 * i_dist])
+                pos = object_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
+                if i_dist > 0:
+                    test = False
+                    while not test:
+                        pos = object_xpos_init.copy() + np.array([np.random.uniform(-0.05, 0.05), np.random.uniform(-0.1, 0.1)])
+                        test = True
+                        for j in range(i_dist):
+                            test = test and np.linalg.norm(pos - dist_objects_xpos[j]) > 0.05
+                dist_objects_xpos.append(pos.copy())
+                object_xpos = pos.copy()
+                object_qpos = self.sim.data.get_joint_qpos('object'+str(i_dist + 2)+':joint')
+                assert object_qpos.shape == (7,)
+                object_qpos[:2] = object_xpos
+                object_qpos[2] = self.height_offset#0.42699
+                self.sim.data.set_joint_qpos('object'+str(i_dist + 2)+':joint', object_qpos)
+
 
         self.sim.forward()
         return True
@@ -451,6 +477,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
         if self.has_object:
             self.height_offset = 0.42599082 #height of table
+
 
     @property
     def nb_tasks(self):
