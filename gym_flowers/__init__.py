@@ -3,30 +3,21 @@ from gym.envs.registration import register
 import numpy as np
 
 
-register(id='Reacher{}-v0'.format(2),
-         entry_point='gym_flowers.envs.mujoco:ReacherEnv2',
-         max_episode_steps=50,
-         reward_threshold=1.0
-         )
 
 for n_dist in range(5):
     n_tasks = 4 + n_dist
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))
-    for reward_type in ['sparse', 'dense']:
-        if reward_type == 'dense':
-            suffix += 'Dense'
-        kwargs = {
-            'reward_type': reward_type,
-            'tasks': tasks,
-            'n_distractors': n_dist
-        }
-        register(
-            id='ModularFetch{}-v0'.format(suffix),
-            entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv',
-            kwargs=kwargs,
-            max_episode_steps=50,
-        )
+    kwargs = {
+        'tasks': tasks,
+        'n_distractors': n_dist
+    }
+    register(
+        id='ModularFetch{}-v0'.format(suffix),
+        entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
 
 
 tasks = ['0','1','2','02','01','012']

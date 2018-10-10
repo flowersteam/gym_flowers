@@ -11,98 +11,74 @@ class SquareDistractor(gym.Env):
     """The Sokoban environment.
     """
 
-    def __init__(self, grid_size=10):
+    def __init__(self, grid_size=10, stochastic=False):
 
         self.grid_size = grid_size
+        self.stochastic = stochastic
 
         self._noop = np.array([0, 0])
         self._move_down = np.array([1, 0])
         self._move_up = np.array([-1, 0])
         self._move_right = np.array([0, 1])
         self._move_left = np.array([0, -1])
-        self._distract = np.array([1, 1])
-        self._moves = [self._noop, self._move_down, self._move_up, self._move_right, self._move_left, self._distract]
+        self._moves = [self._noop, self._move_down, self._move_up, self._move_right, self._move_left, self._noop]
 
         # We set the space
         self.action_space = spaces.Discrete(5)
-        self.observation_space = spaces.Discrete(grid_size * grid_size)
+        self.observation_space = spaces.Box(low=0, high=grid_size - 1, shape=(6, ), dtype=np.uint8)
 
-        self.reward = None
-        self.observation = None
         self.goal = None
 
         self.viewer = None
 
-    def env_seed(self, seed):
-        # TODO: fix it
+    def seed(self, seed):
         np.random.seed(seed)
+        random.seed(seed)
 
     def reset(self):
 
-        self.agent_pos = np.random.randint(0, self.grid_size, size=(2,))
+        self.agent_pos = np.random.randint(0, self.grid_size, size=(2, ))
 
         # create a list of all available cells in the grid
         cells = list(itertools.product(range(self.grid_size), range(self.grid_size)))
         available_cells = list(itertools.product(range(self.grid_size), range(self.grid_size)))
-
         available_cells.remove(tuple(self.agent_pos))
 
-        self.goal = random.sample(cells, 1)[0]
-        self.goal = np.array(self.goal)
+        self.distractor_pos = np.array(random.sample(available_cells, 1)[0])
+        available_cells.remove(tuple(self.distractor_pos))
+        self.goal = np.array(random.sample(available_cells, 1)[0])
 
-        self._compute_grid()
-        self._compute_observation()
+        observation = np.concatenate([self.agent_pos, self.distractor_pos, self.goal])
 
-        # We compute the initial reward.
-        self.compute_reward()
-        if self.reward == self._object_count:
-            self.done = True
-        else:
-            self.done = False
-
-        info = {}
-
-        return self.observation, self.reward, self.done, info
+        return observation
 
     def compute_reward(self):
-        self.reward = 0
-        for obj in self._objects:
-            for goal in self._goals:
-                if (obj == goal).all():
-                    self.reward += 1
-        return self.reward
+        if (self.agent_pos == self.goal).all():
+            reward = 1
+            done = True
+        else:
+            reward = 0
+            done = False
+        return reward, done
 
-    def step(self, action=np.array([0])):
+    def step(self, action=0):
         """Perform an agent action in the Environment
         """
-
-        assert action.shape == (1,)
-
-        # We compute the new positions
-        move = self._moves[action[0]]
+        # We compute the new positions of the agent and distractor
+        if action == 5 and self.stochastic:
+            random_move = self._moves[np.random.randint(0, 5)]
+            if self._in_grid(self.distractor_pos + random_move):
+                self.distractor_pos += random_move
+        move = self._moves[action]
         if self._in_grid(self.agent_pos + move):
-            occupied, object_pose = self._is_occupied(self.agent_pos + move)
-            if occupied and self._in_grid(object_pose + move):
-                blocked, _ = self._is_occupied(object_pose + move)
-                if not blocked:
-                    object_pose += move
-                    self.agent_pos += move
-            if not occupied:
-                self.agent_pos += move
+            self.agent_pos += move
 
-        self.compute_reward()
-        if self._reward == self._object_count:
-            self._done = True
+        observation = np.concatenate([self.agent_pos, self.distractor_pos, self.goal])
+        reward, done = self.compute_reward()
 
         info = {}
 
-        return self.grid, self.reward, self._done, info
-
-    def _is_occupied(self, pos):
-        for obj in self._objects:
-            if (pos == obj).all():
-                return True, obj
-        return False, False
+        return observation, reward, done, info
 
     def _in_grid(self, pose):
         return (pose >= 0).all() and (pose < self.grid_size).all()
@@ -110,8 +86,8 @@ class SquareDistractor(gym.Env):
     def _compute_grid(self):
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
         self.grid[self.agent_pos[0], self.agent_pos[1]] = 1
-
-        self.grid[self.goal[0], self.goal[1]] = 3
+        self.grid[self.goal[0], self.goal[1]] += 2
+        self.grid[self.distractor_pos[0], self.distractor_pos[1]] += 4
 
     def render(self, mode='human', close=False):
         """Renders the environment.
@@ -132,6 +108,7 @@ class SquareDistractor(gym.Env):
             close (bool): close all open renderings
         """
 
+        self._compute_grid()
         if mode == 'rgb_array':
             return self.grid  # return RGB frame suitable for video
         elif mode is 'human':
@@ -157,7 +134,7 @@ class PushingObjects(gym.Env):
     """The Sokoban environment.
     """
 
-    def __init__(self, *args, grid_size=10, object_count=2, **kwargs):
+    def __init__(self, grid_size=10, object_count=2):
 
         self._grid_size = grid_size
         self._object_count = object_count
@@ -211,7 +188,7 @@ class PushingObjects(gym.Env):
             self._goals.append(goal)
         self._goals = np.array(self._goals)
 
-        obs = np.array([self.agent_pos, self.goal])
+        obs = np.concatenate([self.agent_pos, self._goals.ravel()])
 
         # We compute the initial reward.
         self.compute_reward()
@@ -251,7 +228,7 @@ class PushingObjects(gym.Env):
                 self.agent_pos += move
 
         self.compute_reward()
-        if self._reward == self._object_count:
+        if self.reward == self._object_count:
             self._done = True
 
         info = {}
@@ -332,10 +309,29 @@ class PushingObjects(gym.Env):
 
 if __name__ == '__main__':
     env = SquareDistractor()
-    env.env_seed(0)
+    env.seed(0)
     env.reset()
     env._compute_grid()
     print(env.grid)
+    env.step(1)
+    env.step(1)
+    env.step(1)
+    env.step(1)
+    env.step(3)
+    env.step(3)
+    env.step(3)
+    env.step(3)
+    print("last one")
+    print(env.grid)
+    env.step(3)
+    env.step(3)
+    env.step(3)
+    env._compute_grid()
+    print("last one")
+    print(env.grid)
+    # for _ in range(100):
+    #     env.step(random.randint(0, 5))
+    #     env.render()
 
     actor = PushingObjects(object_count=2)
     actor.env_seed(0)
