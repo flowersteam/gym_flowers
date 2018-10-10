@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from gym.envs.robotics import rotations, utils
-from gym_flowers.envs.robotics import robot_env_modular
+from gym_flowers.envs.robotics import multi_task_robot_env
 import numpy.linalg as la
 
 
@@ -10,7 +10,7 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
+class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
     """Superclass for all Fetch environments.
     Note that the addition of more than 3 cubes in the mujoco simulation involve some weird behaviors of the simulation.
     Because of this, we do not add more than 3 cubes in the simulation, but simulate the 2 extra distractor cubes ourselves.
@@ -87,7 +87,7 @@ class ModularFetchEnv(robot_env_modular.ModularRobotEnv):
             model_path = model_path
         else:
             model_path = os.path.join(os.path.dirname(__file__), 'assets', model_path)
-        super(ModularFetchEnv, self).__init__(
+        super(MultiTaskFetchArmV0, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=4,
             initial_qpos=initial_qpos)
 

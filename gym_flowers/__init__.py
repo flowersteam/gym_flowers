@@ -13,8 +13,8 @@ for n_dist in range(5):
         'n_distractors': n_dist
     }
     register(
-        id='ModularFetch{}-v0'.format(suffix),
-        entry_point='gym_flowers.envs.robotics:ModularFetchPickAndPlaceEnv',
+        id='MultiTaskFetchArm{}-v0'.format(suffix),
+        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArm',
         kwargs=kwargs,
         max_episode_steps=50,
     )
