@@ -34,6 +34,21 @@ for n_dist in range(5):
         max_episode_steps=50,
     )
 
+for n_dist in range(5):
+    n_tasks = 4 + n_dist
+    suffix = str(n_tasks)
+    tasks = list(range(n_tasks))
+    kwargs = {
+        'tasks': tasks,
+        'n_distractors': n_dist
+    }
+    register(
+        id='MultiTaskFetchArm{}-v2'.format(suffix),
+        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV2',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
 
 tasks = ['0','1','2','02','01','012']
 random_objects = [True, False]
