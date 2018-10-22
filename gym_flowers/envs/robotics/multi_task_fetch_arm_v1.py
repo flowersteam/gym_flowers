@@ -10,7 +10,7 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
+class MultiTaskFetchArmV1(multi_task_robot_env.MultiTaskRobotEnv):
     """Superclass for all Fetch environments.
     Note that the addition of more than 3 cubes in the mujoco simulation involve some weird behaviors of the simulation.
     Because of this, we do not add more than 3 cubes in the simulation, but simulate the 2 extra distractor cubes ourselves.
@@ -52,13 +52,13 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
         # task 1: Cube1 position (2D)
         # task 2: Cube1 position (3D above Cube0)
         # task 3: Stack Cube1 over Cube0 in given position (2D)
-        # task 4 to 6: Distractor cubes 2 to 4 position (2D)
+        # task 4 to 7: Distractor cubes 2 to 5 position (2D)
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
         # indices of relevant object position (achieved_goal)
         # the achieved goal for the stacking task (T3) contains the gripper coordinate, as it is necessary to compute the reward (has to be far from the goal)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17], [18, 19, 20]]
 
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
@@ -82,12 +82,13 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
         # initialization of object pos variables, position are initialized in self.reset_sim()
         self.object3_xpos = np.zeros([3])
         self.object4_xpos = np.ones([3])
+        self.object5_xpos = 2 * np.ones([3])
 
         if model_path.startswith('/'):
             model_path = model_path
         else:
             model_path = os.path.join(os.path.dirname(__file__), 'assets', model_path)
-        super(MultiTaskFetchArmV0, self).__init__(
+        super(MultiTaskFetchArmV1, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=4,
             initial_qpos=initial_qpos)
 
@@ -127,7 +128,7 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
                 assert len(good_task) == 1
                 task = good_task[0]
 
-                if task in [0, 1, 2, 4, 5, 6]:
+                if task in [0, 1, 2, 4, 5, 6, 7]:
 
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
@@ -202,7 +203,7 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t in [1, 4, 5, 6]:  # 3D coordinates for object in 2D plane
+            elif t in [1, 4, 5, 6, 7]:  # 3D coordinates for object in 2D plane
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
                 tmp_goal[2] = self.height_offset
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
@@ -251,7 +252,8 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
 
         tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
         i = 1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < 0.05:
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
+                0.05 or la.norm(tmp - self.object5_xpos[:2]) < 0.05:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
@@ -263,7 +265,7 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
         tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
         i=1
         while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object4_xpos[:2]) < \
-                0.05:
+                0.05 or la.norm(tmp - self.object5_xpos[:2]) < 0.05:
             tmp = self.object3_xpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
@@ -274,7 +276,7 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
         tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
         i = 1
         while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
-                0.05:
+                0.05 or la.norm(tmp - self.object5_xpos[:2]) < 0.05:
             tmp = self.object4_xpos[:2].copy() + np.random.randn(2) * 0.005
             i += 1
             if i == 100:
@@ -282,13 +284,27 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
                 break
         self.object4_xpos[:2] = tmp.copy()
 
+        tmp = self.object5_xpos[:2].copy() + np.random.randn(2) * 0.005
+        i = 1
+        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or la.norm(tmp - self.object3_xpos[:2]) < \
+                0.05 or la.norm(tmp - self.object4_xpos[:2]) < 0.05:
+            tmp = self.object5_xpos[:2].copy() + np.random.randn(2) * 0.005
+            i += 1
+            if i == 100:
+                tmp = self.object5_xpos[:2].copy()
+                break
+        self.object5_xpos[:2] = tmp.copy()
+
         # for video
         object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
         object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
+        object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
         object3_qpos[:3] = self.object3_xpos
         object4_qpos[:3] = self.object4_xpos
+        object5_qpos[:3] = self.object5_xpos
         self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
         self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
+        self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
 
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
@@ -334,31 +350,15 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
 
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-        if self.n_tasks == 7:
+        if self.n_tasks == 8:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(),
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(),self.object5_xpos,
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(),
                                   object0_velp.ravel(), object1_velp.ravel(),
                                   object0_velr.ravel(), object1_velr.ravel(),
                                   grip_velp, gripper_vel, gripper_state])
-        elif self.n_tasks == 6:
-            obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(),
-                                  object0_rel_pos.ravel(), object1_rel_pos.ravel(),
-                                  object0_rot.ravel(), object1_rot.ravel(),
-                                  object0_velp.ravel(), object1_velp.ravel(),
-                                  object0_velr.ravel(), object1_velr.ravel(),
-                                  grip_velp, gripper_vel, gripper_state])
-        elif self.n_tasks == 5:
-            obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),
-                                 # object4_pos.ravel(),
-                                  object0_rel_pos.ravel(), object1_rel_pos.ravel(),
-                                  object0_rot.ravel(), object1_rot.ravel(),
-                                  object0_velp.ravel(), object1_velp.ravel(),
-                                  object0_velr.ravel(), object1_velr.ravel(),
-                                  grip_velp, gripper_vel, gripper_state])
+
 
         self._update_goals(obs)
         if not self.has_object:
@@ -397,12 +397,15 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
             object0_xpos = self.initial_gripper_xpos[:2]
             object1_xpos = self.initial_gripper_xpos[:2]
             object2_xpos_init = np.array([2, 0.65])
-            self.object3_xpos_init = np.array([1.9, 0.8, self.height_offset])
-            self.object4_xpos_init = np.array([2., 0.9,  self.height_offset])
+            object3_xpos_init = np.array([1.9, 0.8, self.height_offset])
+            object4_xpos_init = np.array([2., 0.9,  self.height_offset])
+            object5_xpos_init = np.array([2.1, 1., self.height_offset])
 
             object2_xpos = object2_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02)])
-            self.object3_xpos = self.object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            self.object4_xpos = self.object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            self.object3_xpos = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            self.object4_xpos = object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            self.object5_xpos = object5_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+
 
 
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
@@ -435,10 +438,13 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
             # for video
             object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
             object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
+            object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
             object3_qpos[:3] = self.object3_xpos
             object4_qpos[:3] = self.object4_xpos
+            object5_qpos[:3] = self.object5_xpos
             self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
             self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
+            self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
 
         self.sim.forward()
         return True

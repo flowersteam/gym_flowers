@@ -14,7 +14,22 @@ for n_dist in range(5):
     }
     register(
         id='MultiTaskFetchArm{}-v0'.format(suffix),
-        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArm',
+        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV0',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+for n_dist in range(5):
+    n_tasks = 4 + n_dist
+    suffix = str(n_tasks)
+    tasks = list(range(n_tasks))
+    kwargs = {
+        'tasks': tasks,
+        'n_distractors': n_dist
+    }
+    register(
+        id='MultiTaskFetchArm{}-v1'.format(suffix),
+        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV1',
         kwargs=kwargs,
         max_episode_steps=50,
     )
