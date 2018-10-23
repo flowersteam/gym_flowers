@@ -352,7 +352,7 @@ class MultiTaskFetchArmV1(multi_task_robot_env.MultiTaskRobotEnv):
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         if self.n_tasks == 8:
             obs = np.concatenate([grip_pos,
-                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(),self.object5_xpos,
+                                  object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(), self.object3_xpos.squeeze(), self.object4_xpos.squeeze(), self.object5_xpos.squeeze(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(),
                                   object0_rot.ravel(), object1_rot.ravel(),
                                   object0_velp.ravel(), object1_velp.ravel(),

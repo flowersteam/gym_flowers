@@ -350,7 +350,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                                   object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(),
                                   grip_velp, gripper_vel, gripper_state])
 
-
+        self.last_obs = obs.copy()
         self._update_goals(obs)
         if not self.has_object:
             achieved_goal = grip_pos.copy()
