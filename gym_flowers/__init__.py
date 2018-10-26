@@ -34,7 +34,7 @@ for n_dist in range(5):
         max_episode_steps=50,
     )
 
-for n_dist in range(5):
+for n_dist in range(6):
     n_tasks = 4 + n_dist
     suffix = str(n_tasks)
     tasks = list(range(n_tasks))
