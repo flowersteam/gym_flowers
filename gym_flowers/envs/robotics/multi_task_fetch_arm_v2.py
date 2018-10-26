@@ -372,7 +372,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                                   object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(),
                                   object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(),
                                   grip_velp, gripper_vel, gripper_state])
-        if self.n_tasks == 6:
+        if self.n_tasks in [6,8]:
             obs = np.concatenate([grip_pos,
                                   object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),
                                   object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),
