@@ -144,7 +144,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                     dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
                     dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
-                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold).astype(np.float32))
+                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < 2 * self.distance_threshold).astype(np.float32))
                     else:
                         r[i_g] = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
         return r.reshape([r.size, 1])
@@ -243,7 +243,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
             elif t == 6:
                 obs = self._get_obs()
                 tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + 0.10
+                tmp_goal[2] = self.height_offset + 0.11
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
