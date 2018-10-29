@@ -10,7 +10,7 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
+class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
     """Superclass for all Fetch environments.
     Note that the addition of more than 3 cubes in the mujoco simulation involve some weird behaviors of the simulation.
     Because of this, we do not add more than 3 cubes in the simulation, but simulate the 2 extra distractor cubes ourselves.
@@ -52,17 +52,17 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
         # task 1: Cube1 position (2D)
         # task 2: Cube1 position (3D above Cube0)
         # task 3: Stack Cube1 over Cube0 in given position (3D)
-        # task 4: Cube2 position (3D above Cube0)
+        # task 4: Cube2 position 2D
         # task 5: Cube2 3D anywhere
-        # task 6: Stack Cube2 over Cube0 in given position (3D)
-        # task 7: Cube2 position 2D
+        # task 6: Cube2 position (3D above Cube0)
+        # task 7: Stack Cube2 over Cube0 in given position (3D)
         # task 8: Distractor cubes (3-4) position (2D)
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
         # indices of relevant object position (achieved_goal)
         # the achieved goal for the stacking task (T3) contains the gripper coordinate, as it is necessary to compute the reward (has to be far from the goal)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [9, 10, 11], [9, 10, 11, 0, 1, 2], [9,10,11], [12, 13, 14], [15, 16, 17]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [9, 10, 11], [9,10,11], [9, 10, 11, 0, 1, 2], [12, 13, 14], [15, 16, 17]]
 
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
@@ -87,7 +87,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
         self.object3_xpos = np.zeros([3])
         self.object4_xpos = np.ones([3])
 
-        self.bias = True
+        self.bias = False
 
         if model_path.startswith('/'):
             model_path = model_path
@@ -133,7 +133,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                 assert len(good_task) == 1
                 task = good_task[0]
 
-                if task in [0, 1, 2, 4, 5, 7]:
+                if task in [0, 1, 2, 4, 5, 6]:
 
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
@@ -142,7 +142,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                     else:
                         r[i_g] = -d
 
-                elif task in [3, 6]:
+                elif task in [3, 7]:
                     dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
                     dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
                     if self.reward_type == 'sparse':
@@ -221,10 +221,16 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 4:  # 3D coordinates for the object
+            elif t == 3:
                 obs = self._get_obs()
                 tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + (goal[2] + 1.57) * 0.45 / 2.57  # mapping in -1,1 to 0.1,0.45
+                tmp_goal[2] = self.height_offset + 0.05
+                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                goal_to_render = tmp_goal.copy()
+
+            elif t == 4:  # 3D coordinates for object in 2D plane
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                tmp_goal[2] = self.height_offset
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
@@ -234,26 +240,20 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-
-            elif t == 3:
+            elif t == 6:  # 3D coordinates for the object
                 obs = self._get_obs()
                 tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + 0.05
+                tmp_goal[2] = self.height_offset + (goal[2] + 1.57) * 0.45 / 2.57  # mapping in -1,1 to 0.1,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 6:
+            elif t == 7:
                 obs = self._get_obs()
                 tmp_goal = obs['observation'][6:9].copy()
                 tmp_goal[2] = self.height_offset + 0.11
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 7:  # 3D coordinates for object in 2D plane
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-                tmp_goal[2] = self.height_offset
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
-                goal_to_render = tmp_goal.copy()
 
 
         mask = np.zeros([self.n_tasks])
@@ -270,7 +270,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
 
     def _update_goals(self, obs):
 
-        if self.task in [2, 3, 4, 6]:
+        if self.task in [2, 3, 6, 7]:
             self.goal[self.tasks_g_id[self.task][:2]] = obs[6:8]
             self.goal_to_render = self.goal[self.tasks_g_id[self.task]].copy()
 
@@ -383,8 +383,8 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                               object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(),
                               grip_velp, gripper_vel, gripper_state])
 
-        # if self.bias:
-        #     obs[:2] += 0.1
+        if self.bias:
+            obs[6:8] += 0.2
         self.last_obs = obs.copy()
         self._update_goals(obs)
         if not self.has_object:
