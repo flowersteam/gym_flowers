@@ -1,1 +1,1 @@
-from gym_flowers.envs.robotics.fetch.multi_task_fetch_arm import MultiTaskFetchArmV0, MultiTaskFetchArmV1, MultiTaskFetchArmV2
+from gym_flowers.envs.robotics.fetch.multi_task_fetch_arm import MultiTaskFetchArmV0, MultiTaskFetchArmV1, MultiTaskFetchArmV2, MultiTaskFetchArmV3
