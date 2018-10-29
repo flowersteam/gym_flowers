@@ -40,12 +40,12 @@ for n_dist in range(5):
         max_episode_steps=50,
     )
 
-    register(
-        id='MultiTaskFetchArm{}-v3'.format(suffix),
-        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV3',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
+register(
+    id='MultiTaskFetchArm5-v3',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV3',
+    kwargs=dict(tasks=[0,1,2,3,4], n_distractors=0),
+    max_episode_steps=50,
+)
 
 
 

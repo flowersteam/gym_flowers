@@ -93,7 +93,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
             model_path = model_path
         else:
             model_path = os.path.join(os.path.dirname(__file__), 'assets', model_path)
-        super(MultiTaskFetchArmV2, self).__init__(
+        super(MultiTaskFetchArmV3, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=4,
             initial_qpos=initial_qpos)
 
@@ -270,7 +270,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
 
     def _update_goals(self, obs):
 
-        if self.task in [2, 3, 6, 7]:
+        if self.task in [2, 3]:
             self.goal[self.tasks_g_id[self.task][:2]] = obs[6:8]
             self.goal_to_render = self.goal[self.tasks_g_id[self.task]].copy()
 
