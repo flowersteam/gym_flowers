@@ -384,7 +384,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                               grip_velp, gripper_vel, gripper_state])
 
         if self.bias:
-            obs[6:8] += 0.1
+            obs[6:8] += 0.2
         self.last_obs = obs.copy()
         self._update_goals(obs)
         if not self.has_object:

@@ -1,5 +1,5 @@
 from gym import utils
-from gym_flowers.envs.robotics import multi_task_fetch_arm_v0, multi_task_fetch_arm_v1, multi_task_fetch_arm_v2_savee
+from gym_flowers.envs.robotics import multi_task_fetch_arm_v0, multi_task_fetch_arm_v1, multi_task_fetch_arm_v2
 
 
 class MultiTaskFetchArmV0(multi_task_fetch_arm_v0.MultiTaskFetchArmV0, utils.EzPickle):
@@ -44,7 +44,7 @@ class MultiTaskFetchArmV2(multi_task_fetch_arm_v2.MultiTaskFetchArmV2, utils.EzP
         }
         for i in range(2):
             initial_qpos['object'+str(i)+':joint'] = [1.25, 0.53, 0.45, 1., 0., 0., 0.]
-        multi_task_fetch_arm_v2_savee.MultiTaskFetchArmV2.__init__(
+        multi_task_fetch_arm_v2.MultiTaskFetchArmV2.__init__(
             self, 'fetch/multi_task_fetch_arm.xml', has_object=True, block_gripper=False, n_substeps=20,
             gripper_extra_height=0.2, target_in_the_air=True, target_offset=0.0,
             obj_range=0.15, target_range=0.15, distance_threshold=0.05,
