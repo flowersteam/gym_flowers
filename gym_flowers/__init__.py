@@ -41,7 +41,7 @@ for n_dist in range(5):
     )
 
     register(
-        id='MultiTaskFetchArm{}-v2'.format(suffix),
+        id='MultiTaskFetchArm{}-v3'.format(suffix),
         entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV3',
         kwargs=kwargs,
         max_episode_steps=50,
