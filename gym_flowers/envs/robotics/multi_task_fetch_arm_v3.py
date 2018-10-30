@@ -311,7 +311,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
 
             # object 2
             object2_pos = self.sim.data.get_site_xpos('object2')
-            if True:#self.bias:
+            if self.bias:
                 object2_pos[0] += 0.05
             # rotations
             object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))
