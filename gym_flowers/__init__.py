@@ -47,6 +47,12 @@ register(
     max_episode_steps=50,
 )
 
+register(
+    id='MultiTaskFetchArm7-v4',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV4',
+    kwargs=dict(tasks=[0,1,2,3,4,5,6], n_distractors=0),
+    max_episode_steps=50,
+)
 
 
 tasks = ['0','1','2','02','01','012']
