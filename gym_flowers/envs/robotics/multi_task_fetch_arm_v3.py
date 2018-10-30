@@ -51,18 +51,14 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
         # task 0: Hand position (3D)
         # task 1: Cube1 position (2D)
         # task 2: Cube1 position (3D above Cube0)
-        # task 3: Stack Cube1 over Cube0 in given position (3D)
-        # task 4: Cube2 position 2D
-        # task 5: Cube2 3D anywhere
-        # task 6: Cube2 position (3D above Cube0)
-        # task 7: Stack Cube2 over Cube0 in given position (3D)
-        # task 8: Distractor cubes (3-4) position (2D)
+        # task 3: Cube2 position 2D
+
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
         # indices of relevant object position (achieved_goal)
         # the achieved goal for the stacking task (T3) contains the gripper coordinate, as it is necessary to compute the reward (has to be far from the goal)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [9, 10, 11], [9,10,11], [9, 10, 11, 0, 1, 2], [12, 13, 14], [15, 16, 17]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [9, 10, 11], [9, 10, 11], [9,10,11], [9, 10, 11, 0, 1, 2], [12, 13, 14], [15, 16, 17]]
 
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
@@ -133,7 +129,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
                 assert len(good_task) == 1
                 task = good_task[0]
 
-                if task in [0, 1, 2, 4, 5, 6]:
+                if task in [0, 1, 2, 3, 4, 5, 6]:
 
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
@@ -142,13 +138,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
                     else:
                         r[i_g] = -d
 
-                elif task in [3, 7]:
-                    dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
-                    dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
-                    if self.reward_type == 'sparse':
-                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < 2 * self.distance_threshold).astype(np.float32))
-                    else:
-                        r[i_g] = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
+
         return r.reshape([r.size, 1])
 
 
@@ -221,36 +211,9 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 3:
-                obs = self._get_obs()
-                tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + 0.05
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
-                goal_to_render = tmp_goal.copy()
-
-            elif t == 4:  # 3D coordinates for object in 2D plane
+            elif t == 3:  # 3D coordinates for object in 2D plane
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
                 tmp_goal[2] = self.height_offset
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
-                goal_to_render = tmp_goal.copy()
-
-            elif t == 5:  # 3D coordinates for the object
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0.0,0.45
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
-                goal_to_render = tmp_goal.copy()
-
-            elif t == 6:  # 3D coordinates for the object
-                obs = self._get_obs()
-                tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + (goal[2] + 1.57) * 0.45 / 2.57  # mapping in -1,1 to 0.1,0.45
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
-                goal_to_render = tmp_goal.copy()
-
-            elif t == 7:
-                obs = self._get_obs()
-                tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + 0.11
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
@@ -270,7 +233,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
 
     def _update_goals(self, obs):
 
-        if self.task in [2, 3]:
+        if self.task in [2]:
             self.goal[self.tasks_g_id[self.task][:2]] = obs[6:8]
             self.goal_to_render = self.goal[self.tasks_g_id[self.task]].copy()
 
@@ -348,7 +311,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
 
             # object 2
             object2_pos = self.sim.data.get_site_xpos('object2')
-            if self.bias:
+            if True:#self.bias:
                 object2_pos[0] += 0.05
             # rotations
             object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))

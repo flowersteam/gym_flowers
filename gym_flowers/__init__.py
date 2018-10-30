@@ -41,7 +41,7 @@ for n_dist in range(5):
     )
 
 register(
-    id='MultiTaskFetchArm5-v3',
+    id='MultiTaskFetchArm4-v3',
     entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV3',
     kwargs=dict(tasks=[0,1,2,3,4], n_distractors=0),
     max_episode_steps=50,
@@ -53,6 +53,8 @@ register(
     kwargs=dict(tasks=[0,1,2,3,4,5,6], n_distractors=0),
     max_episode_steps=50,
 )
+
+register(id='Room-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
 
 
 tasks = ['0','1','2','02','01','012']
