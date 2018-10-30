@@ -348,6 +348,8 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
 
             # object 2
             object2_pos = self.sim.data.get_site_xpos('object2')
+            if self.bias:
+                object2_pos[0] += 0.05
             # rotations
             object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))
             # velocities
@@ -383,8 +385,7 @@ class MultiTaskFetchArmV3(multi_task_robot_env.MultiTaskRobotEnv):
                               object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(),
                               grip_velp, gripper_vel, gripper_state])
 
-        if self.bias:
-            obs[9:11] += 0.2
+
         self.last_obs = obs.copy()
         self._update_goals(obs)
         if not self.has_object:
