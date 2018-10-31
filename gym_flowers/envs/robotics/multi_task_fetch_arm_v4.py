@@ -203,9 +203,8 @@ class MultiTaskFetchArmV4(multi_task_robot_env.MultiTaskRobotEnv):
                 goal_to_render = tmp_goal.copy()
 
             elif t == 2:  # 3D coordinates for the object
-                obs = self._get_obs()
-                tmp_goal = obs['observation'][6:9].copy()
-                tmp_goal[2] = self.height_offset + (goal[2] + 1.25) * 0.45 / 2.25  # mapping in -1,1 to 0.05,0.45
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0.0,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
