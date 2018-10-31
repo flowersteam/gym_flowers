@@ -54,7 +54,14 @@ register(
     max_episode_steps=50,
 )
 
-register(id='Room-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
+register(
+    id='MultiTaskFetchArm3-v4',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV4',
+    kwargs=dict(tasks=[0,1,2], n_distractors=0),
+    max_episode_steps=50,
+)
+
+register(id='Rooms-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
 
 
 tasks = ['0','1','2','02','01','012']
