@@ -13,7 +13,7 @@ def goal_distance(goal_a, goal_b):
 class Rooms1():
     # def __init__(self, size_agent=5, size_grid=200, size_room=100, button_pos=(180,20), max_step_size=10, max_door_step=10, reward_type='sparse', distance_threshold=10):
 
-    def __init__(self, size_agent=5, size_grid=100, size_room=50, button_pos=(90,10), max_step_size=5, max_door_step=5, reward_type='sparse', distance_threshold=10):
+    def __init__(self, size_agent=5, size_grid=100, size_room=50, button_pos=(90,10), max_step_size=10, max_door_step=10, reward_type='sparse', distance_threshold=10):
         """Initializes
         """
 
@@ -57,6 +57,7 @@ class Rooms1():
         self.dim_g = sum(dim_tasks_g)
         self.goal = np.zeros([self.dim_g])
         self.mask = np.zeros([self.n_tasks])
+        self.goal_to_render = np.zeros([self.n_tasks])
         self.task = 0
         self.agent_pos = self.agent_pos_init.copy()
         self.door = self.door_init
@@ -133,18 +134,25 @@ class Rooms1():
                 task = good_task[0]
 
                 if task in [0, 1]:
-
+                    if task == 0:
+                        ag = (self.grid_max - self.grid_min) * (achieved_goal[i_g, self.tasks_ag_id[task]] + 1) / 2 + self.grid_min
+                        g = (self.grid_max - self.grid_min) * (goal[i_g, self.tasks_g_id[task]] + 1) / 2 + self.grid_min
+                    else:
+                        ag = self.size_room * (achieved_goal[i_g, self.tasks_ag_id[task]] + 1) / 2 + 10
+                        g = self.size_room * (goal[i_g, self.tasks_ag_id[task]] + 1) / 2 + 10
                     # Compute distance between goal and the achieved goal.
-                    d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
+                    d = goal_distance(ag, g)
                     if self.reward_type == 'sparse':
-                        r[i_g] = -(d > self.distance_threshold).astype(np.float32)
+                        r[i_g] = -(d > (self.distance_threshold // 2)).astype(np.float32)
                     else:
                         r[i_g] = -d
 
                 elif task == 2:
                     in_room = achieved_goal[i_g, self.tasks_ag_id[task][2]]
-                    if in_room:
-                        d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:2]], goal[i_g, self.tasks_g_id[task]])
+                    if in_room == 1:
+                        ag = (self.grid_max - self.grid_min) * (achieved_goal[i_g, self.tasks_ag_id[task][:2]] + 1) / 2 + self.grid_min
+                        g = (self.grid_max - self.grid_min) * (goal[i_g, self.tasks_g_id[task]] + 1) / 2 + self.grid_min
+                        d = goal_distance(ag, g)
 
                         if self.reward_type == 'sparse':
                             r[i_g] = -(d > self.distance_threshold).astype(np.float32)
@@ -152,6 +160,8 @@ class Rooms1():
                             r[i_g] = -d
                     else:
                         r[i_g] = - 1
+                else:
+                    raise NotImplementedError
 
         return r.reshape([r.size, 1])
 
@@ -261,21 +271,21 @@ class Rooms1():
                 goal = full_goal[self.tasks_g_id[t]]
             else:
                 goal = full_goal
-            if t == 0:  # 3D coordinates for the hand
+            if t == 0:  # coordinates in the big room
                 tmp_goal = (goal + 1) * (self.size_grid // 2 - 2 * self.size_agent)
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() - self.grid_min) / (self.grid_max - self.grid_min) - 1  # normalize to room size
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 1:  # 3D coordinates for object in 2D plane
+            elif t == 1:  # coordinates 1D for the door
                 tmp_goal = ((goal[0] + 1) / 2) * self.size_room + 10
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() - 10) / self.size_room - 1
                 goal_to_render = tmp_goal.copy()
 
-            elif t == 2:  # 3D coordinates for the object
+            elif t == 2:  # coordinate in the small room
                 tmp_goal = np.zeros([2])
                 tmp_goal[0] = ((goal[0] + 1) / 2) * (self.size_room - 2 * self.size_agent) + self.size_grid - self.size_room
                 tmp_goal[1] = ((goal[1] + 1) / 2) * (self.size_room - 2 * self.size_agent) - self.size_room
-                desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
+                desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() - self.grid_min) / (self.grid_max - self.grid_min) - 1  # normalize to room size
                 goal_to_render = tmp_goal.copy()
 
         mask = np.zeros([self.n_tasks])
@@ -319,9 +329,9 @@ class Rooms1():
         self.renderer.add_collection(lc)
 
         if self.task in [0, 2]:
-            goal_circle = Circle(self.goal[self.tasks_g_id[self.task]], self.size_agent, color='k')
+            goal_circle = Circle(self.goal_to_render, self.size_agent, color='k')
         else:
-            goal_circle = Circle(np.array([self.size_grid - self.size_room + self.goal[2] - 10, 0]), self.size_agent, color='k')
+            goal_circle = Circle(np.array([self.size_grid - self.size_room + self.goal_to_render - 10, 0]), self.size_agent, color='k')
         self.renderer.add_patch(goal_circle)
 
         button_circle = Circle(self.button_pos, self.size_agent, color=[204 / 255, 0, 0])
@@ -337,19 +347,6 @@ class Rooms1():
     def close(self):
         if self.renderer is not None:
             plt.close()
-
-    # def _sample_goal(self):
-    #     if self.has_object:
-    #         goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-self.target_range, self.target_range, size=3)
-    #         goal += self.target_offset
-    #         goal[2] = self.height_offset
-    #         if self.target_in_the_air and self.np_random.uniform() < 0.5:
-    #             goal[2] += self.np_random.uniform(0, 0.45)
-    #     else:
-    #         goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-0.15, 0.15, size=3)
-    #     return goal.copy()
-
-
 
     @property
     def nb_tasks(self):
