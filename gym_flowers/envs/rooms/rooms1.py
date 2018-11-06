@@ -28,7 +28,7 @@ class Rooms1():
         self.n_timesteps = 50
         self.t = 0
 
-        self.agent_pos_init = np.array([3 * self.size_agent, self.size_grid - 3 * self.size_agent])
+        self.agent_pos_init = np.array([4 * self.size_agent, self.size_grid - 4 * self.size_agent])
         self.door_init = 10
         self.in_room = False
 
@@ -58,8 +58,10 @@ class Rooms1():
         self.goal = np.zeros([self.dim_g])
         self.mask = np.zeros([self.n_tasks])
         self.task = 0
-        self.agent_pos = np.array([0, 0])
-        self.door = None
+        self.agent_pos = self.agent_pos_init.copy()
+        self.door = self.door_init
+        self.grid_min = np.array([0, -size_room])
+        self.grid_max = np.array([size_grid, size_grid])
 
         self.action_space = spaces.Box(-1., 1., shape=(3,), dtype='float32')
         obs = self._get_obs()
@@ -155,7 +157,12 @@ class Rooms1():
 
     def _get_obs(self):
 
-        obs = np.concatenate([self.agent_pos, self.button_pos, np.array([self.door]), np.array([self.in_room])])
+        agent_pos = 2 * (self.agent_pos.copy() - self.grid_min) / (self.grid_max - self.grid_min) - 1
+        button_pos = 2 * (self.button_pos.copy() - self.grid_min) / (self.grid_max - self.grid_min) - 1
+        door = 2 * (self.door - 10) / self.size_room - 1
+        in_room = 1 if self.in_room else -1
+
+        obs = np.concatenate([agent_pos, button_pos, np.array([door]), np.array([in_room])])
         achieved_goal = self._compute_achieved_goal(obs)
 
         return {
