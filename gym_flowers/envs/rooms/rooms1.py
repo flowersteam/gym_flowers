@@ -12,10 +12,8 @@ def goal_distance(goal_a, goal_b):
 
 class Rooms1():
 
-    def __init__(self, size_agent=3, size_grid=300, size_room=150, button_pos=(290,10), max_step_size=5, max_door_step=3, reward_type='sparse', distance_threshold=3):
+    def __init__(self, size_agent=5, size_grid=200, size_room=100, button_pos=(180,20), max_step_size=5, max_door_step=10, reward_type='sparse', distance_threshold=10):
         """Initializes
-
-
         """
 
         self.size_agent = size_agent
@@ -29,8 +27,8 @@ class Rooms1():
         self.n_timesteps = 50
         self.t = 0
 
-        self.agent_pos_init = np.array([2 * self.size_agent, self.size_grid - 2 * self.size_agent])
-        self.door_init = 0
+        self.agent_pos_init = np.array([3 * self.size_agent, self.size_grid - 3 * self.size_agent])
+        self.door_init = 10
         self.in_room = False
 
         self.renderer = None
@@ -82,6 +80,10 @@ class Rooms1():
     def unwrapped(self):
         return self
 
+    def seed(self, seed):
+        np.random.seed(seed)
+        return seed
+
     def reset(self):
         self.t = 0
         done = False
@@ -118,6 +120,8 @@ class Rooms1():
             for i_g in range(goal.shape[0]):
                 # find current task
                 ind = np.argwhere(goal[i_g] != 0).squeeze().tolist()
+                if type(ind) == int:
+                    ind = [ind]
                 good_task = []
                 for i_t in range(self.n_tasks):
                     if ind == self.tasks_g_id[i_t]:
@@ -135,9 +139,9 @@ class Rooms1():
                         r[i_g] = -d
 
                 elif task == 2:
-                    in_room = achieved_goal[i_g, self.tasks_ag_id[task][3]]
+                    in_room = achieved_goal[i_g, self.tasks_ag_id[task][2]]
                     if in_room:
-                        d = np.abs(achieved_goal[i_g, self.tasks_ag_id[task][:2]] - goal[i_g, self.tasks_g_id[task]])
+                        d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:2]], goal[i_g, self.tasks_g_id[task]])
 
                         if self.reward_type == 'sparse':
                             r[i_g] = -(d > self.distance_threshold).astype(np.float32)
@@ -182,7 +186,7 @@ class Rooms1():
                 agent_pos[0] = self.size_grid - self.size_agent
             # check top before room (left) and after beginning of door
             if agent_pos[1] - self.size_agent < 0 and (agent_pos[0] - self.size_agent < self.size_grid - self.size_room or \
-                                    agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door):
+                                    agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door - 10):
                 agent_pos[1] = self.size_agent
             if agent_pos[1] - self.size_agent < 0:
                 self.in_room = True
@@ -193,8 +197,8 @@ class Rooms1():
                 if agent_pos[0] - self.size_agent < self.size_grid - self.size_room:
                     agent_pos[0] = self.size_grid - self.size_agent
                 # check right
-                if agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door:
-                    agent_pos[0] = self.size_grid - self.size_room + self.door - self.size_agent
+                if agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door - 10:
+                    agent_pos[0] = self.size_grid - self.size_room + self.door - 10 - self.size_agent
             else:
                 # check left
                 if agent_pos[0] - self.size_agent < self.size_grid - self.size_room:
@@ -204,7 +208,7 @@ class Rooms1():
                     agent_pos[0] = self.size_grid - self.size_agent
                 if agent_pos[1] - self.size_agent < - self.size_room:
                     agent_pos[1] = -self.size_room + self.size_agent
-                if agent_pos[1] + self.size_agent > 0 and agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door:
+                if agent_pos[1] + self.size_agent > 0 and agent_pos[0] + self.size_agent > self.size_grid - self.size_room + self.door - 10:
                     agent_pos[1] = - self.size_agent
                 if agent_pos[1] + self.size_agent > 0:
                     self.in_room = False
@@ -213,7 +217,7 @@ class Rooms1():
 
         # door act
         if np.linalg.norm(self.agent_pos - self.button_pos) < self.distance_threshold:
-            self.door = np.clip(self.door + door_act, 0, self.size_room)
+            self.door = np.clip(self.door + door_act, 10, self.size_room + 10)
 
         obs = self._get_obs()
         reward = self.compute_reward(obs['achieved_goal'], self.goal)
@@ -250,18 +254,19 @@ class Rooms1():
             else:
                 goal = full_goal
             if t == 0:  # 3D coordinates for the hand
-                tmp_goal = (goal + 1) * self.size_grid
+                tmp_goal = (goal + 1) * (self.size_grid // 2 - 2 * self.size_agent)
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
             elif t == 1:  # 3D coordinates for object in 2D plane
-                tmp_goal = (goal[0] + 1)
+                tmp_goal = ((goal[0] + 1) / 2) * self.size_room + 10
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
             elif t == 2:  # 3D coordinates for the object
-                tmp_goal[0] = ((goal[0] + 1) / 2) * self.size_room + self.size_grid - self.size_room
-                tmp_goal[1] = ((goal[0] + 1) / 2) * self.size_room - self.size_room
+                tmp_goal = np.zeros([2])
+                tmp_goal[0] = ((goal[0] + 1) / 2) * (self.size_room - 2 * self.size_agent) + self.size_grid - self.size_room
+                tmp_goal[1] = ((goal[1] + 1) / 2) * (self.size_room - 2 * self.size_agent) - self.size_room
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
@@ -284,6 +289,8 @@ class Rooms1():
                 p.remove()
             for p in self.renderer.patches:
                 p.remove()
+            for p in self.renderer.patches:
+                p.remove()
             for p in self.renderer.collections:
                 p.remove()
         except:
@@ -297,15 +304,24 @@ class Rooms1():
         plt.ylim([- self.size_room, self.size_grid])
         lines = [[(0, self.size_grid), (self.size_grid, self.size_grid)], [(0, 0), (0, self.size_grid)],
                  [(self.size_grid, - self.size_room), (self.size_grid, self.size_grid)], [(0, 0), (self.size_grid - self.size_room, 0)],
-                 [(self.size_grid - self.size_room + self.door, 0), (self.size_grid, 0)], [(self.size_grid - self.size_room, -self.size_room), (self.size_grid, -self.size_room)],
+                 [(self.size_grid - self.size_room + self.door - 10, 0), (self.size_grid, 0)], [(self.size_grid - self.size_room, -self.size_room), (self.size_grid,
+                                                                                                                                                   -self.size_room)],
                  [(self.size_grid - self.size_room, -self.size_room), (self.size_grid - self.size_room, 0)]]
         lc = mc.LineCollection(lines, colors='k', linewidths=2)
         self.renderer.add_collection(lc)
+
+        if self.task in [0, 2]:
+            goal_circle = Circle(self.goal[self.tasks_g_id[self.task]], self.size_agent, color='k')
+        else:
+            goal_circle = Circle(np.array([self.size_grid - self.size_room + self.goal[2] - 10, 0]), self.size_agent, color='k')
+        self.renderer.add_patch(goal_circle)
 
         button_circle = Circle(self.button_pos, self.size_agent, color=[204 / 255, 0, 0])
         self.renderer.add_patch(button_circle)
         agent_circle = Circle(self.agent_pos, self.size_agent, color=[0, 76 / 255, 153 / 255])
         self.renderer.add_patch(agent_circle)
+
+
 
         plt.pause(0.05)
         plt.draw()
