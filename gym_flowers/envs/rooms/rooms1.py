@@ -98,11 +98,12 @@ class Rooms1():
 
         return obs
 
-    def compute_reward(self, achieved_goal, goal, info=None):
+    def compute_reward(self, achieved_goal, goal, task_descr, info=None):
 
         if goal.ndim == 1:
             goal = goal.reshape([1, goal.size])
             achieved_goal = achieved_goal.reshape([1, achieved_goal.size])
+            task_descr = task_descr.reshape([1, task_descr.size])
 
         if self.flat:
             # When the goal is set in the union of the tasks goal spaces, the reward is the euclidean distance in that space.
@@ -123,15 +124,7 @@ class Rooms1():
             r = np.zeros([goal.shape[0]])
             for i_g in range(goal.shape[0]):
                 # find current task
-                ind = np.argwhere(goal[i_g] != 0).squeeze().tolist()
-                if type(ind) == int:
-                    ind = [ind]
-                good_task = []
-                for i_t in range(self.n_tasks):
-                    if ind == self.tasks_g_id[i_t]:
-                        good_task.append(i_t)
-                assert len(good_task) == 1
-                task = good_task[0]
+                task = np.argwhere(task_descr[i_g] == 1)[0][0]
 
                 if task in [0, 1]:
                     if task == 0:
@@ -238,7 +231,7 @@ class Rooms1():
             self.door = np.clip(self.door + door_act, 10, self.size_room + 10)
 
         obs = self._get_obs()
-        reward = self.compute_reward(obs['achieved_goal'], self.goal)
+        reward = self.compute_reward(obs['achieved_goal'], self.goal, obs['mask'])
         info = dict(is_success= reward == 0)
         if self.t == self.n_timesteps:
             done = True
