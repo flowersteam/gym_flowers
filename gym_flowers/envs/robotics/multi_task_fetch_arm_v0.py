@@ -450,8 +450,8 @@ class MultiTaskFetchArmV0(multi_task_robot_env.MultiTaskRobotEnv):
             goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-0.15, 0.15, size=3)
         return goal.copy()
 
-    def _is_success(self, achieved_goal, desired_goal):
-        return float(not self.compute_reward(achieved_goal, desired_goal, {}))
+    def _is_success(self, achieved_goal, desired_goal, task_descr):
+        return float(not self.compute_reward(achieved_goal, desired_goal, task_descr, {}))
 
     def _env_setup(self, initial_qpos):
         for name, value in initial_qpos.items():

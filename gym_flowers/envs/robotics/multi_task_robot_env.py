@@ -63,9 +63,9 @@ class MultiTaskRobotEnv(gym.GoalEnv):
 
         done = False
         self.info = {
-            'is_success': self._is_success(obs['achieved_goal'], self.goal),
+            'is_success': self._is_success(obs['achieved_goal'], self.goal, obs['mask']),
         }
-        reward = self.compute_reward(obs['achieved_goal'], self.goal, self.info)
+        reward = self.compute_reward(obs['achieved_goal'], self.goal, obs['mask'], self.info)
         return obs, reward, done, self.info
 
     def reset(self):
