@@ -82,7 +82,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
         self.mask = np.zeros([self.n_tasks])
         self.task = 0
 
-        self.info = dict(is_success=0)
+        self.info = dict(is_success=0, dense_reward=None)
         # initialization of object pos variables, position are initialized in self.reset_sim()
         self.object3_xpos = np.zeros([3])
         self.object4_xpos = np.ones([3])
@@ -100,8 +100,12 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
     # GoalEnv methods
     # ----------------------------
 
-    def compute_reward(self, achieved_goal, goal, task_descr, info=None):
+    def compute_reward(self, achieved_goal, goal, task_descr, info=None, dense=False):
 
+        if dense:
+            reward_type = 'dense'
+        else:
+            reward_type = self.reward_type
         if goal.ndim == 1:
             goal = goal.reshape([1, goal.size])
             achieved_goal = achieved_goal.reshape([1, achieved_goal.size])
@@ -118,7 +122,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                     ag[i_g, ind: ind + len_t] = achieved_goal[i_g, self.tasks_ag_id[t][:len_t]]
                     ind += len_t
                 d = goal_distance(ag[i_g, :], goal[i_g, :])
-                if self.reward_type == 'sparse':
+                if reward_type == 'sparse':
                     r[i_g] = -(d > self.distance_threshold).astype(np.float32)
                 else:
                     r[i_g] = - d
@@ -133,7 +137,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
 
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
-                    if self.reward_type == 'sparse':
+                    if reward_type == 'sparse':
                         r[i_g] = -(d > self.distance_threshold).astype(np.float32)
                     else:
                         r[i_g] = -d
@@ -141,7 +145,7 @@ class MultiTaskFetchArmV2(multi_task_robot_env.MultiTaskRobotEnv):
                 elif task in [3, 6]:
                     dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
                     dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
-                    if self.reward_type == 'sparse':
+                    if reward_type == 'sparse':
                         r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < 2 * self.distance_threshold).astype(np.float32))
                     else:
                         r[i_g] = - dcube - 1/(5+dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
