@@ -250,70 +250,72 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
         object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
         object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
 
-        tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
-        i = 1
-        while la.norm(tmp - self.objects_xpos[2][:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or \
-                        la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05:
+        if self.n_distractors > 0:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = object2_qpos[:2].copy()
-                break
-        object2_qpos[:2] = tmp.copy()
+            i = 1
+            while la.norm(tmp - self.objects_xpos[2][:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or \
+                            la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05:
+                tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
+                i += 1
+                if i == 100:
+                    tmp = object2_qpos[:2].copy()
+                    break
+            object2_qpos[:2] = tmp.copy()
 
 
 
-        tmp = self.objects_xpos[2][:2].copy() + np.random.randn(2) * 0.005
-        i = 1
-        while la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
-                        la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05:
             tmp = self.objects_xpos[2][:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = self.objects_xpos[2][:2].copy()
-                break
-        self.objects_xpos[2][:2] = tmp.copy()
+            i = 1
+            while la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
+                            la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - object1_qpos[:2]) < 0.05:
+                tmp = self.objects_xpos[2][:2].copy() + np.random.randn(2) * 0.005
+                i += 1
+                if i == 100:
+                    tmp = self.objects_xpos[2][:2].copy()
+                    break
+            self.objects_xpos[2][:2] = tmp.copy()
 
 
 
-        tmp = object1_qpos[:2].copy() + np.random.randn(2) * 0.005
-        i=1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
-                la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - self.objects_xpos[2][:2]) < 0.05:
-            tmp = self.objects_xpos[0][:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = self.objects_xpos[0][:2].copy()
-                break
-        self.objects_xpos[0][:2] = tmp.copy()
+            tmp = object1_qpos[:2].copy() + np.random.randn(2) * 0.005
+            i=1
+            while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
+                    la.norm(tmp - self.objects_xpos[1][:2]) < 0.05 or la.norm(tmp - self.objects_xpos[2][:2]) < 0.05:
+                tmp = self.objects_xpos[0][:2].copy() + np.random.randn(2) * 0.005
+                i += 1
+                if i == 100:
+                    tmp = self.objects_xpos[0][:2].copy()
+                    break
+            self.objects_xpos[0][:2] = tmp.copy()
 
-        tmp = self.objects_xpos[1][:2].copy() + np.random.randn(2) * 0.005
-        i = 1
-        while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
-                la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or la.norm(tmp - self.objects_xpos[2][:2]) < 0.05:
             tmp = self.objects_xpos[1][:2].copy() + np.random.randn(2) * 0.005
-            i += 1
-            if i == 100:
-                tmp = self.objects_xpos[1][:2].copy()
-                break
-        self.objects_xpos[1][:2] = tmp.copy()
+            i = 1
+            while la.norm(tmp - object1_qpos[:2]) < 0.05 or la.norm(tmp - object0_qpos[:2]) < 0.05 or la.norm(tmp - object2_qpos[:2]) < 0.05 or \
+                    la.norm(tmp - self.objects_xpos[0][:2]) < 0.05 or la.norm(tmp - self.objects_xpos[2][:2]) < 0.05:
+                tmp = self.objects_xpos[1][:2].copy() + np.random.randn(2) * 0.005
+                i += 1
+                if i == 100:
+                    tmp = self.objects_xpos[1][:2].copy()
+                    break
+            self.objects_xpos[1][:2] = tmp.copy()
 
-        # add noise on virtual distractors
-        for i in range(3, self.n_distractors - 1):
-            self.objects_xpos[i][:2] += np.random.randn(2) * 0.005
+            # add noise on virtual distractors
+            for i in range(3, self.n_distractors - 1):
+                self.objects_xpos[i][:2] += np.random.randn(2) * 0.005
 
 
         # for video
-        object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
-        object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
-        object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
-        object3_qpos[:3] = self.objects_xpos[0]
-        object4_qpos[:3] = self.objects_xpos[1]
-        object5_qpos[:3] = self.objects_xpos[2]
-        self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
-        self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
-        self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
-        self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
+        if self.n_distractors > 0:
+            object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
+            object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
+            object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
+            object3_qpos[:3] = self.objects_xpos[0]
+            object4_qpos[:3] = self.objects_xpos[1]
+            object5_qpos[:3] = self.objects_xpos[2]
+            self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
+            self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
+            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+            self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
 
 
 
@@ -427,11 +429,12 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
             object5_xpos_init = np.array([1.9, 0.7, self.height_offset])
 
             object2_xpos = object2_xpos.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            self.objects_xpos[0] = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            self.objects_xpos[1] = object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            self.objects_xpos[2] = object5_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
-            for i in range(3, self.n_distractors - 1):
-                self.objects_xpos[i] = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+            if self.n_distractors > 0:
+                self.objects_xpos[0] = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+                self.objects_xpos[1] = object4_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+                self.objects_xpos[2] = object5_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
+                for i in range(3, self.n_distractors - 1):
+                    self.objects_xpos[i] = object3_xpos_init.copy() + np.array([np.random.uniform(-0.01, 0.01), np.random.uniform(-0.02, 0.02), 0])
 
 
             while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
@@ -456,18 +459,19 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
             self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
 
             # distractors
-            object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
-            object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
-            object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
-            object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
-            object2_qpos[:3] = object2_xpos
-            object3_qpos[:3] = self.objects_xpos[0]
-            object4_qpos[:3] = self.objects_xpos[1]
-            object5_qpos[:3] = self.objects_xpos[2]
-            self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
-            self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
-            self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
-            self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
+            if self.n_distractors > 0:
+                object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
+                object3_qpos = self.sim.data.get_joint_qpos('object3:joint')
+                object4_qpos = self.sim.data.get_joint_qpos('object4:joint')
+                object5_qpos = self.sim.data.get_joint_qpos('object5:joint')
+                object2_qpos[:3] = object2_xpos
+                object3_qpos[:3] = self.objects_xpos[0]
+                object4_qpos[:3] = self.objects_xpos[1]
+                object5_qpos[:3] = self.objects_xpos[2]
+                self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
+                self.sim.data.set_joint_qpos('object3:joint', object3_qpos)
+                self.sim.data.set_joint_qpos('object4:joint', object4_qpos)
+                self.sim.data.set_joint_qpos('object5:joint', object5_qpos)
 
 
         self.sim.forward()
