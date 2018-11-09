@@ -76,6 +76,13 @@ register(
 )
 
 register(
+    id='MultiTaskFetchArm10-v5',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
+    kwargs=dict(tasks=[0,1,2,3,4,5,6,7,8,9], n_distractors=0),
+    max_episode_steps=50,
+)
+
+register(
     id='MultiTaskFetchArm4-v5',
     entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
     kwargs=dict(tasks=[0,1,2,3], n_distractors=0),
