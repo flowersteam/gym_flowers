@@ -19,7 +19,7 @@ def goal_distance(goal_a, goal_b):
  # Class for the orange dude
 class Player(object):
     def __init__(self, scale):
-        self.rect = pygame.Rect(2 * scale, 2 * scale, scale, scale)
+        self.rect = pygame.Rect(10 * scale, 10 * scale, scale, scale)
 
     def move(self, dx, dy, walls):
 
@@ -32,8 +32,8 @@ class Player(object):
     def move_single_axis(self, dx, dy, walls):
 
         # Move the rect
-        self.rect.x += dx
-        self.rect.y += dy
+        self.rect.x += round(dx)
+        self.rect.y += round(dy)
 
         # If you collide with a wall, move out based on velocity
         for wall in walls:
