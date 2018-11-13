@@ -367,7 +367,7 @@ class Rooms5():
             dx = action[0] * self.max_step_size
             dy = action[1] * self.max_step_size
             door_act = action[2] * self.max_door_step
-            self.player.move_single_axis(dx, dy)
+            self.player.move_single_axis(dx, dy, self.walls)
 
         else:
             # Move the player if an arrow key is pressed
