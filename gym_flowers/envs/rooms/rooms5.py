@@ -171,8 +171,8 @@ class Rooms5():
         self.grid_size = 31 * self.scale #43
         self.size_big_room = 28 * self.scale # 16
         self.size_small_room = 9 * self.scale #13
-        self.max_step_size = 4
-        self.max_door_step = 4
+        self.max_step_size = 8
+        self.max_door_step = 8
 
         self.tasks = list(range(nb_rooms * 2 + 1))
         self.n_tasks = len(self.tasks)

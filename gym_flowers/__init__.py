@@ -98,7 +98,7 @@ register(
 
 register(id='Rooms1-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
 register(id='Rooms2-v0', entry_point='gym_flowers.envs.rooms:Rooms2', kwargs={}, max_episode_steps=50)
-register(id='Rooms5-v0', entry_point='gym_flowers.envs.rooms:Rooms5', kwargs={}, max_episode_steps=50)
+register(id='Rooms5-v0', entry_point='gym_flowers.envs.rooms:Rooms5', kwargs={}, max_episode_steps=75)
 
 
 
