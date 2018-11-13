@@ -169,7 +169,7 @@ class Rooms5():
 
 
         self.grid_size = 31 * self.scale #43
-        self.size_big_room = 28 * self.scale # 16
+        self.size_big_room = 18 * self.scale # 26
         self.size_small_room = 9 * self.scale #13
         self.max_step_size = 8
         self.max_door_step = 8
@@ -367,7 +367,7 @@ class Rooms5():
             dx = action[0] * self.max_step_size
             dy = action[1] * self.max_step_size
             door_act = action[2] * self.max_door_step
-            self.player.move_single_axis(dx, dy, self.walls)
+            self.player.move(dx, dy, self.walls)
 
         else:
             # Move the player if an arrow key is pressed
