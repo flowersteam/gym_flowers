@@ -121,7 +121,7 @@ class Rooms5():
         #     "1000000000000010000000000000100000000000001",
         #     "1111111111111111111111111111111111111111111"]
 
-        self.init_level = [
+        init_level = [
             "1111111111111111111111111111111",
             "1000000000000000000010000000001",
             "1000000000000000000010000000001",
@@ -153,16 +153,17 @@ class Rooms5():
             "1000000020100000000010000000201",
             "1000000000100000000010000000001",
             "1111111111111111111111111111111"]
-        self.level = np.zeros([len(self.init_level), len(self.init_level[0])])
-        for i, row in enumerate(self.init_level):
+        self.init_level = np.zeros([len(init_level), len(init_level[0])])
+        for i, row in enumerate(init_level):
             for j, col in enumerate(row):
-                self.level[i, j] = int(col)
+                self.init_level[i, j] = int(col)
+        self.level = self.init_level.copy()
         # self.door_coordinates = [[28, 28, 1, 14], [29, 42, 14, 14], [29, 42, 28, 28], [28, 28, 29, 42], [14, 14, 29, 42]]
         self.door_coordinates = [[20, 20, 1, 10], [21, 30, 10, 10], [21, 30, 20, 20], [20, 20, 21, 30], [10, 10, 21, 30]]
         self.door_orientation = ['h', 'v', 'v', 'h', 'h']
         # self.room_coordinates = [(29, 1), (29, 15), (29, 29), (15, 29), (1, 29)]
         self.room_coordinates = [(21, 1), (21, 11), (21, 21), (11, 21), (1, 21)]
-        self.update_doors(self.level)
+        self.update_doors(self.init_level)
 
         self.n_timesteps = 50
         self.t = 0
@@ -248,8 +249,8 @@ class Rooms5():
 
     def reset(self):
         self.t = 0
-        done = False
-        self.update_doors(self.level)
+        self.update_doors(self.init_level)
+        self.level = self.init_level.copy()
         self.player = Player(self.scale)
         self.doors = np.zeros([self.nb_rooms])
         self.in_rooms = [False] * self.nb_rooms
