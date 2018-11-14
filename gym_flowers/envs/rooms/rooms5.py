@@ -54,7 +54,7 @@ class Wall(object):
         self.rect = pygame.Rect(pos[0], pos[1], scale, scale)
 
 class Rooms5():
-    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=16, debug=True):
+    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=16, debug=False):
 
         self.debug = debug
         self.distance_threshold = distance_threshold
@@ -317,20 +317,15 @@ class Rooms5():
         if self.agent_pos[1] >= 16 * self.scale: #20
             if self.agent_pos[0] < 8 * self.scale: #10
                 self.in_rooms[0] = 1
-                print('Room 1')
             elif self.agent_pos[0] < 16 * self.scale:#20
                 self.in_rooms[1] = 1
-                print('Room 2')
             else:
                 self.in_rooms[2] = 1
-                print('Room 3')
         elif self.agent_pos[0] > 17 * self.scale: #21
             if self.agent_pos[1] < 8 * self.scale:#10
                 self.in_rooms[4] = 1
-                print('Room 5')
             else:
                 self.in_rooms[3] = 1
-                print('Room 4')
 
 
         obs = agent_pos
