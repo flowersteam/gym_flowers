@@ -218,8 +218,8 @@ class Rooms5():
 
     def update_doors(self, level):
         # Parse the level string above. W = wall, E = exit
-        self.button_rect = [None] * self.nb_rooms
-        self.button_pos = [None] * self.nb_rooms
+        self.button_rect = [None] * 5
+        self.button_pos = [None] * 5
         self.walls = []
         x = y = 0
         ind = 0
