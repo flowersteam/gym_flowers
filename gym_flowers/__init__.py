@@ -61,46 +61,29 @@ register(
     max_episode_steps=50,
 )
 
-register(
-    id='MultiTaskFetchArm8-v5',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
-    kwargs=dict(tasks=[0,1,2,3,4,5,6,7], n_distractors=0),
-    max_episode_steps=50,
-)
+for n_tasks in range(1, 12):
+    suffix = str(n_tasks)
+    kwargs = {'tasks': range(n_tasks),
+              'n_distractors': 0}
+    register(
+        id='MultiTaskFetchArm{}-v5'.format(suffix),
+        entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
 
-register(
-    id='MultiTaskFetchArm11-v5',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
-    kwargs=dict(tasks=[0,1,2,3,4,5,6,7,8,9,10], n_distractors=0),
-    max_episode_steps=50,
-)
+# register(id='Rooms1-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
+# register(id='Rooms2-v0', entry_point='gym_flowers.envs.rooms:Rooms2', kwargs={}, max_episode_steps=50)
 
-register(
-    id='MultiTaskFetchArm10-v5',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
-    kwargs=dict(tasks=[0,1,2,3,4,5,6,7,8,9], n_distractors=0),
-    max_episode_steps=50,
-)
-
-register(
-    id='MultiTaskFetchArm9-v5',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
-    kwargs=dict(tasks=[0,1,2,3,4,5,6,7,8], n_distractors=0),
-    max_episode_steps=50,
-)
-
-register(
-    id='MultiTaskFetchArm4-v5',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV5',
-    kwargs=dict(tasks=[0,1,2,3], n_distractors=0),
-    max_episode_steps=50,
-)
-
-register(id='Rooms1-v0', entry_point='gym_flowers.envs.rooms:Rooms1', kwargs={}, max_episode_steps=50)
-register(id='Rooms2-v0', entry_point='gym_flowers.envs.rooms:Rooms2', kwargs={}, max_episode_steps=50)
-register(id='Rooms5-v0', entry_point='gym_flowers.envs.rooms:Rooms5', kwargs={}, max_episode_steps=75)
-
-
+for n_rooms in range(1, 6):
+    suffix = str(n_rooms)
+    kwargs = {'nb_rooms': n_rooms}
+    register(
+        id='Rooms{}-v0'.format(suffix),
+        entry_point='gym_flowers.envs.rooms:Rooms5',
+        kwargs=kwargs,
+        max_episode_steps=75,
+    )
 
 
 tasks = ['0','1','2','02','01','012']
