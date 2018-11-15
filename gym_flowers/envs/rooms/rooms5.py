@@ -54,7 +54,7 @@ class Wall(object):
         self.rect = pygame.Rect(pos[0], pos[1], scale, scale)
 
 class Rooms5():
-    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=16, debug=False):
+    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=18, debug=False):
 
         self.debug = debug
         self.distance_threshold = distance_threshold
@@ -211,7 +211,7 @@ class Rooms5():
                 if col == 1:
                     Wall((x, y), self.walls, self.scale)
                 if col == 2:
-                    rec = pygame.Rect(x, y, self.scale, self.scale)
+                    rec = pygame.Rect(x, y, self.scale + 4, self.scale + 4)
                     self.button_rect[self.button_ind[ind]] = rec
                     self.button_pos[self.button_ind[ind]] = np.array((rec.centerx, rec.centery))
                     ind += 1
@@ -429,7 +429,7 @@ class Rooms5():
             if t == 0:  # coordinates in the big room
                 tmp_goal = np.array([self.scale, self.scale]) + (goal + 1) / 2 * self.size_big_room
                 desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() ) / self.grid_size - 1  # normalize to grid_size
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
 
             elif t in [1, 3, 5, 7, 9]:  # coordinates 1D for the door
                 i = t//2
@@ -439,13 +439,13 @@ class Rooms5():
                 else:
                     tmp_goal += np.array([0, int((goal[0] + 1) / 2 * self.size_small_room)])
                 desired_goal[self.tasks_g_id[t]] = goal[0]
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
 
             elif t in [2, 4, 6, 8, 10]:  # coordinate in the small room 1
                 i = (t - 1) // 2
                 tmp_goal = self.scale * np.array([self.room_coordinates[i][1], self.room_coordinates[i][0]]) + (goal + 1) / 2 * (self.size_small_room - self.scale)
                 desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() ) / self.grid_size - 1  # normalize to grid_size
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
 
         mask = np.zeros([self.n_tasks])
         if not self.flat:
