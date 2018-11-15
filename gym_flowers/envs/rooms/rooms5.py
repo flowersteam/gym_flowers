@@ -54,7 +54,7 @@ class Wall(object):
         self.rect = pygame.Rect(pos[0], pos[1], scale, scale)
 
 class Rooms5():
-    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=18, debug=False):
+    def __init__(self, reward_type='sparse', nb_rooms=5, distance_threshold=16, debug=True):
 
         self.debug = debug
         self.distance_threshold = distance_threshold
@@ -78,83 +78,70 @@ class Rooms5():
         # Holds the level layout in a list of strings
 
         # init_level = [
-        #     "1111111111111111111111111111111",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000011111111111",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000201",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1020000000000000000010000000001",
-        #     "1000000000000000000010000000001",
-        #     "1111111111111111111111111111111",
-        #     "1000000000100000000010000000001",
-        #     "1000000000100000002010000000001",
-        #     "1000000000100000000010000000001",
-        #     "1000000000100000000010000000001",
-        #     "1000000000100000000010000000001",
-        #     "1000000000100000000010000000001",
-        #     "1000000000100000000010000000001",
-        #     "1000000020100000000010000000201",
-        #     "1000000000100000000010000000001",
-        #     "1111111111111111111111111111111"]
-
+        #     "1111111111111111111111111",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000111111111",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000201",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1020000000000000100000001",
+        #     "1000000000000000100000001",
+        #     "1111111111111111111111111",
+        #     "1000000010000000100000001",
+        #     "1000000010000020100000001",
+        #     "1000000010000000100000001",
+        #     "1000000010000000100000001",
+        #     "1000000010000000100000001",
+        #     "1000002010000000100000201",
+        #     "1000000010000000100000001",
+        #     "1111111111111111111111111"]
         init_level = [
-            "1111111111111111111111111",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000111111111",
-            "1000000000000000100000001",
-            "1000000000000000100000201",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1000000000000000100000001",
-            "1020000000000000100000001",
-            "1000000000000000100000001",
-            "1111111111111111111111111",
-            "1000000010000000100000001",
-            "1000000010000020100000001",
-            "1000000010000000100000001",
-            "1000000010000000100000001",
-            "1000000010000000100000001",
-            "1000002010000000100000201",
-            "1000000010000000100000001",
-            "1111111111111111111111111"]
+            "1111111111111111111",
+            "1000000000001000001",
+            "1000000000001000001",
+            "1000000000001000001",
+            "1000000000001000001",
+            "1000000000001000001",
+            "1000000000001111111",
+            "1000000000001000001",
+            "1000000000001000201",
+            "1000000000001000001",
+            "1020000000001000001",
+            "1000000000001000001",
+            "1111111111111111111",
+            "1000001000001000001",
+            "1000001000201000001",
+            "1000001000001000001",
+            "1000201000001000201",
+            "1000001000001000001",
+            "1111111111111111111"]
         self.init_level = np.zeros([len(init_level), len(init_level[0])])
         for i, row in enumerate(init_level):
             for j, col in enumerate(row):
                 self.init_level[i, j] = int(col)
         self.level = self.init_level.copy()
-        self.door_coordinates = [[16, 16, 1, 8], [17, 24, 8, 8], [17, 24, 16, 16], [16, 16, 17, 24], [8, 8, 17, 24]]
-        # self.door_coordinates = [[20, 20, 1, 10], [21, 30, 10, 10], [21, 30, 20, 20], [20, 20, 21, 30], [10, 10, 21, 30]]
+        self.door_coordinates = [[12, 12, 1, 6], [13, 18, 6, 6], [13, 18, 12, 12], [12, 12, 13, 18], [6, 6, 13, 18]]
+        # self.door_coordinates = [[16, 16, 1, 8], [17, 24, 8, 8], [17, 24, 16, 16], [16, 16, 17, 24], [8, 8, 17, 24]]
         self.door_orientation = ['h', 'v', 'v', 'h', 'h']
-        # self.room_coordinates = [(21, 1), (21, 11), (21, 21), (11, 21), (1, 21)]
-        self.room_coordinates = [(17, 1), (17, 9), (17, 17), (9, 17), (1, 17)]
+        # self.room_coordinates = [(17, 1), (17, 9), (17, 17), (9, 17), (1, 17)]
+        self.room_coordinates = [(13, 1), (13, 7), (13, 13), (7, 13), (1, 13)]
         self.update_doors(self.init_level)
 
         self.n_timesteps = 50
         self.t = 0
 
 
-        self.grid_size = 24 * self.scale #31
-        self.size_big_room = 14 * self.scale # 18
-        self.size_small_room = 7 * self.scale #9
+        self.grid_size = 18 * self.scale #24
+        self.size_big_room = 10 * self.scale # 14
+        self.size_small_room = 5 * self.scale #7
         self.max_step_size = 6
         self.max_door_step = 6
 
@@ -211,7 +198,7 @@ class Rooms5():
                 if col == 1:
                     Wall((x, y), self.walls, self.scale)
                 if col == 2:
-                    rec = pygame.Rect(x, y, self.scale + 4, self.scale + 4)
+                    rec = pygame.Rect(x, y, self.scale, self.scale)
                     self.button_rect[self.button_ind[ind]] = rec
                     self.button_pos[self.button_ind[ind]] = np.array((rec.centerx, rec.centery))
                     ind += 1
@@ -304,7 +291,6 @@ class Rooms5():
                             r[i_g] = -d
                     else:
                         r[i_g] = - 1
-
                 else:
                     raise NotImplementedError
 
@@ -314,18 +300,24 @@ class Rooms5():
 
         agent_pos = 2 * self.agent_pos.copy() / self.grid_size - 1
         self.in_rooms = np.zeros([self.nb_rooms])
-        if self.agent_pos[1] >= 16 * self.scale: #20
-            if self.agent_pos[0] < 8 * self.scale: #10
+        if self.agent_pos[1] >= 12 * self.scale: #16
+            if self.agent_pos[0] < 6 * self.scale: #8
                 self.in_rooms[0] = 1
-            elif self.agent_pos[0] < 16 * self.scale:#20
+                print('room0')
+            elif self.agent_pos[0] < 12 * self.scale:#16
                 self.in_rooms[1] = 1
+                print('room1')
             else:
                 self.in_rooms[2] = 1
-        elif self.agent_pos[0] > 17 * self.scale: #21
-            if self.agent_pos[1] < 8 * self.scale:#10
+                print('room2')
+        elif self.agent_pos[0] > 13 * self.scale: #17
+            if self.agent_pos[1] < 6 * self.scale:#8
                 self.in_rooms[4] = 1
+                print('room4')
             else:
                 self.in_rooms[3] = 1
+                print('room3')
+
 
 
         obs = agent_pos
@@ -429,7 +421,7 @@ class Rooms5():
             if t == 0:  # coordinates in the big room
                 tmp_goal = np.array([self.scale, self.scale]) + (goal + 1) / 2 * self.size_big_room
                 desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() ) / self.grid_size - 1  # normalize to grid_size
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
 
             elif t in [1, 3, 5, 7, 9]:  # coordinates 1D for the door
                 i = t//2
@@ -439,13 +431,13 @@ class Rooms5():
                 else:
                     tmp_goal += np.array([0, int((goal[0] + 1) / 2 * self.size_small_room)])
                 desired_goal[self.tasks_g_id[t]] = goal[0]
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
 
             elif t in [2, 4, 6, 8, 10]:  # coordinate in the small room 1
                 i = (t - 1) // 2
                 tmp_goal = self.scale * np.array([self.room_coordinates[i][1], self.room_coordinates[i][0]]) + (goal + 1) / 2 * (self.size_small_room - self.scale)
                 desired_goal[self.tasks_g_id[t]] = 2 * (tmp_goal.copy() ) / self.grid_size - 1  # normalize to grid_size
-                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale+4, self.scale+4)
+                goal_to_render = pygame.Rect(tmp_goal[0], tmp_goal[1], self.scale, self.scale)
 
         mask = np.zeros([self.n_tasks])
         if not self.flat:
@@ -463,8 +455,9 @@ class Rooms5():
 
         if not self.renderer:
             # Set up the display
-            # self.screen = pygame.display.set_mode((690, 690))
-            self.screen = pygame.display.set_mode((497, 497))
+            # self.screen = pygame.display.set_mode((497, 497))
+            self.screen = pygame.display.set_mode((300, 300))
+
             self.clock = pygame.time.Clock()
 
         # Draw the scene
