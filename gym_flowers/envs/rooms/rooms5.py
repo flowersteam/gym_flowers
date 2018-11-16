@@ -417,7 +417,7 @@ class Rooms5():
     def set_flat_env(self):
         self.flat = True
 
-    def _compute_goal(self, full_goal, task):
+    def _compute_goal(self, full_goal, task, eval=None):
         if self.flat:
             task = self.tasks
         else:
