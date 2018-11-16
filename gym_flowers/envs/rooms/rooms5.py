@@ -404,7 +404,7 @@ class Rooms5():
 
         return obs, reward, done, info
 
-    def reset_task_goal(self, goal, task=None):
+    def reset_task_goal(self, goal, task=None, directly=None, eval=None):
         self._set_task(task)
         self.goal, self.mask, self.goal_to_render = self._compute_goal(goal, task)
         obs = self._get_obs()
