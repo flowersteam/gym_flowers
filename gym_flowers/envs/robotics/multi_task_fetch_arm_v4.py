@@ -166,9 +166,16 @@ class MultiTaskFetchArmV4(multi_task_robot_env.MultiTaskRobotEnv):
         utils.ctrl_set_action(self.sim, action)
         utils.mocap_set_action(self.sim, action)
 
-    def reset_task_goal(self, goal, task=None):
+    def reset_task_goal(self, goal, task=None, directly=False, eval=False):
         self._set_task(task)
-        self.goal, self.mask, self.goal_to_render = self._compute_goal(goal, task)
+        if directly:
+            self.goal_to_render = goal.copy()
+            self.goal = np.zeros([self.dim_g])
+            self.goal[self.tasks_g_id[task]] = goal.copy()
+            self.mask = np.zeros([self.nb_tasks])
+            self.mask[task] = 1
+        else:
+            self.goal, self.mask, self.goal_to_render = self._compute_goal(goal, task, eval)
         obs = self._get_obs()
         return obs
 
@@ -179,32 +186,36 @@ class MultiTaskFetchArmV4(multi_task_robot_env.MultiTaskRobotEnv):
     def set_flat_env(self):
         self.flat = True
 
-    def _compute_goal(self, full_goal, task):
+    def _compute_goal(self, full_goal, task, eval):
         if self.flat:
             task = self.tasks
         else:
             task = [task]
         desired_goal = np.zeros([self.dim_g])
+        if eval:
+            target_range = 0.15
+        else:
+            target_range = self.target_range
         for t in task:
             if self.flat:
                 goal = full_goal[self.tasks_g_id[t]]
             else:
                 goal = full_goal
             if t == 0:  # 3D coordinates for the hand
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * 0.15
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * target_range
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 3 * target_range / 2  # mapping in -1,1 to 0,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
             elif t in [1, 3, 4, 5, 6]:  # 3D coordinates for object in 2D plane
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * target_range + self.target_offset
                 tmp_goal[2] = self.height_offset
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
             elif t == 2:  # 3D coordinates for the object
-                tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0.0,0.45
+                tmp_goal = self.initial_gripper_xpos[:3] + goal * target_range + self.target_offset
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 3 * target_range / 2  # mapping in -1,1 to 0.0,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 

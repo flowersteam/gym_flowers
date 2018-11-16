@@ -176,9 +176,16 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
         utils.ctrl_set_action(self.sim, action)
         utils.mocap_set_action(self.sim, action)
 
-    def reset_task_goal(self, goal, task=None):
+    def reset_task_goal(self, goal, task=None, directly=False, eval=False):
         self._set_task(task)
-        self.goal, self.mask, self.goal_to_render = self._compute_goal(goal, task)
+        if directly:
+            self.goal_to_render = goal.copy()
+            self.goal = np.zeros([self.dim_g])
+            self.goal[self.tasks_g_id[task]] = goal.copy()
+            self.mask = np.zeros([self.nb_tasks])
+            self.mask[task] = 1
+        else:
+            self.goal, self.mask, self.goal_to_render = self._compute_goal(goal, task, eval)
         obs = self._get_obs()
         return obs
 
@@ -189,7 +196,7 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
     def set_flat_env(self):
         self.flat = True
 
-    def _compute_goal(self, full_goal, task):
+    def _compute_goal(self, full_goal, task, eval=None):
         if self.flat:
             task = self.tasks
         else:
