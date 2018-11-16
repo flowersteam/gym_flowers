@@ -202,7 +202,7 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
                 goal = full_goal
             if t == 0:  # 3D coordinates for the hand
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0,0.45
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 3 * self.target_range / 2  # mapping in -1,1 to 0,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 
@@ -214,7 +214,7 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
 
             elif t == 2:  # 3D coordinates for the object
                 tmp_goal = self.initial_gripper_xpos[:3] + goal * self.target_range + self.target_offset
-                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 0.45 / 2  # mapping in -1,1 to 0.0,0.45
+                tmp_goal[2] = self.height_offset + (goal[2] + 1) * 3 * self.target_range / 2  # mapping in -1,1 to 0.0,0.45
                 desired_goal[self.tasks_g_id[t]] = tmp_goal.copy()
                 goal_to_render = tmp_goal.copy()
 

@@ -303,20 +303,20 @@ class Rooms5():
         if self.agent_pos[1] >= 12 * self.scale: #16
             if self.agent_pos[0] < 6 * self.scale: #8
                 self.in_rooms[0] = 1
-                print('room0')
+                # print('room0')
             elif self.agent_pos[0] < 12 * self.scale:#16
                 self.in_rooms[1] = 1
-                print('room1')
+                # print('room1')
             else:
                 self.in_rooms[2] = 1
-                print('room2')
+                # print('room2')
         elif self.agent_pos[0] > 13 * self.scale: #17
             if self.agent_pos[1] < 6 * self.scale:#8
                 self.in_rooms[4] = 1
-                print('room4')
+                # print('room4')
             else:
                 self.in_rooms[3] = 1
-                print('room3')
+                # print('room3')
 
 
 
@@ -326,6 +326,7 @@ class Rooms5():
             door = np.array([2 * self.doors[i] / self.size_small_room - 1])
             in_room = np.array([1 if self.in_rooms[i] else -1])
             obs = np.concatenate([obs, button_pos, door, in_room])
+        # print(obs)
 
         achieved_goal = self._compute_achieved_goal(obs)
 
@@ -348,21 +349,30 @@ class Rooms5():
 
         else:
             # Move the player if an arrow key is pressed
-            key = pygame.key.get_pressed()
-            if key[pygame.K_LEFT]:
-                self.player.move(-self.max_step_size, 0, self.walls)
-            if key[pygame.K_RIGHT]:
-                self.player.move(self.max_step_size, 0, self.walls)
-            if key[pygame.K_UP]:
-                self.player.move(0, -self.max_step_size, self.walls)
-            if key[pygame.K_DOWN]:
-                self.player.move(0, self.max_step_size, self.walls)
-            if key[pygame.K_SPACE]:
-                door_act = 1 * self.max_door_step
-            elif key[pygame.K_BACKSPACE]:
-                door_act = -1 * self.max_door_step
-            else:
-                door_act = 0
+            key_pressed = False
+            while not key_pressed:
+                pygame.event.get()
+                key = pygame.key.get_pressed()
+                if key[pygame.K_LEFT]:
+                    self.player.move(-self.max_step_size, 0, self.walls)
+                    key_pressed = True
+                if key[pygame.K_RIGHT]:
+                    self.player.move(self.max_step_size, 0, self.walls)
+                    key_pressed = True
+                if key[pygame.K_UP]:
+                    self.player.move(0, -self.max_step_size, self.walls)
+                    key_pressed = True
+                if key[pygame.K_DOWN]:
+                    self.player.move(0, self.max_step_size, self.walls)
+                    key_pressed = True
+                if key[pygame.K_SPACE]:
+                    door_act = 1 * self.max_door_step
+                    key_pressed = True
+                elif key[pygame.K_BACKSPACE]:
+                    door_act = -1 * self.max_door_step
+                    key_pressed = True
+                else:
+                    door_act = 0
 
 
         for i in range(self.nb_rooms):

@@ -62,6 +62,23 @@ register(
 )
 
 for target_range in [1, 2, 5, 10]:
+    for n_tasks in range(3, 7):
+        suffix = str(n_tasks)
+        kwargs = {'tasks': range(n_tasks),
+                  'target_range': target_range}
+        if target_range == 1:
+            id = 'MultiTaskFetchArm{}-v4'.format(suffix)
+        else:
+            id = 'MultiTaskFetchArm{}_{}-v4'.format(suffix, str(target_range))
+        register(
+            id=id,
+            entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV4',
+            kwargs=kwargs,
+            max_episode_steps=50,
+        )
+
+
+for target_range in [1, 2, 5, 10]:
     for n_tasks in range(1, 12):
         suffix = str(n_tasks)
         kwargs = {'tasks': range(n_tasks),
@@ -87,7 +104,7 @@ for n_rooms in range(1, 6):
         id='Rooms{}-v0'.format(suffix),
         entry_point='gym_flowers.envs.rooms:Rooms5',
         kwargs=kwargs,
-        max_episode_steps=75,
+        max_episode_steps=100,
     )
 
 
