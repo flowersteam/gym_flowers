@@ -299,7 +299,7 @@ class Rooms5():
     def _get_obs(self):
 
         agent_pos = 2 * self.agent_pos.copy() / self.grid_size - 1
-        self.in_rooms = np.zeros([self.nb_rooms])
+        self.in_rooms = np.zeros([5])
         if self.agent_pos[1] >= 12 * self.scale: #16
             if self.agent_pos[0] < 6 * self.scale: #8
                 self.in_rooms[0] = 1
