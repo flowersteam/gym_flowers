@@ -47,20 +47,6 @@ register(
     max_episode_steps=50,
 )
 
-register(
-    id='MultiTaskFetchArm7-v4',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV4',
-    kwargs=dict(tasks=[0,1,2,3,4,5,6], n_distractors=0),
-    max_episode_steps=50,
-)
-
-register(
-    id='MultiTaskFetchArm3-v4',
-    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV4',
-    kwargs=dict(tasks=[0,1,2], n_distractors=0),
-    max_episode_steps=50,
-)
-
 for target_range in [1, 2, 5, 10]:
     for n_tasks in range(3, 7):
         suffix = str(n_tasks)
