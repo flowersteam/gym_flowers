@@ -64,7 +64,7 @@ for target_range in [1, 2, 5, 10]:
         )
 
 
-for target_range in [1, 2, 5, 10]:
+for target_range in [1, 2, 3, 5, 10]:
     for n_tasks in range(1, 12):
         suffix = str(n_tasks)
         kwargs = {'tasks': range(n_tasks),
