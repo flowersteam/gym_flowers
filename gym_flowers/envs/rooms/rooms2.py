@@ -11,12 +11,10 @@ def goal_distance(goal_a, goal_b):
 
 
 class Rooms2():
-    def __init__(self, size_agent=5, size_grid=200,  button_pos1=(190, 10), button_pos2=(110, -90), max_step_size=10, max_door_step=10, reward_type='sparse', \
-                                                                                                                                                    distance_threshold=10):
-    # def __init__(self, size_agent=5, size_grid=100,  button_pos1=(90, 10), button_pos2=(60, -40), max_step_size=10, max_door_step=10, reward_type='sparse', \
-    #                                                                                                                                                 distance_threshold=10):                                                                                                                                             distance_threshold=10):
-        """Initializes
-        """
+    # def __init__(self, size_agent=5, size_grid=200,  button_pos1=(190, 10), button_pos2=(110, -90), max_step_size=10, max_door_step=10, reward_type='sparse', \
+    #                                                                                                                                                 distance_threshold=10):
+    def __init__(self, size_agent=5, size_grid=100,  button_pos1=(90, 10), button_pos2=(60, -40), max_step_size=10, max_door_step=10, reward_type='sparse',
+                 distance_threshold=10):
 
         self.size_agent = size_agent
         self.size_grid = size_grid
