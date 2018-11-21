@@ -90,7 +90,7 @@ for n_rooms in range(1, 6):
         id='Rooms{}-v0'.format(suffix),
         entry_point='gym_flowers.envs.rooms:Rooms5',
         kwargs=kwargs,
-        max_episode_steps=100,
+        max_episode_steps=500,
     )
 
 
