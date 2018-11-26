@@ -135,7 +135,7 @@ class Rooms5():
         self.room_coordinates = [(13, 1), (13, 7), (13, 13), (7, 13), (1, 13)]
         self.update_doors(self.init_level)
 
-        self.n_timesteps = 50
+        self.n_timesteps = 500
         self.t = 0
 
 
