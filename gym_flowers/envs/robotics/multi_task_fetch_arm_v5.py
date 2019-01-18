@@ -143,7 +143,7 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
                     dcube = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][:3]], goal[i_g, self.tasks_g_id[task]])
                     dgrip = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task][3:]], goal[i_g, self.tasks_g_id[task]])
                     if reward_type == 'sparse':
-                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold).astype(np.float32))
+                        r[i_g] = - ((dcube > self.distance_threshold).astype(np.float32) or (dgrip < self.distance_threshold * 1.2).astype(np.float32))
                     else:
                         r[i_g] = - dcube - 1 / (5 + dgrip) * (dgrip < self.distance_threshold).astype(np.float32)
 
@@ -257,6 +257,7 @@ class MultiTaskFetchArmV5(multi_task_robot_env.MultiTaskRobotEnv):
         object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
         object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
 
+        # avoid collisions
         if self.n_distractors > 0:
             tmp = object2_qpos[:2].copy() + np.random.randn(2) * 0.005
             i = 1
