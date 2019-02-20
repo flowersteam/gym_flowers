@@ -1,5 +1,6 @@
 from gym import utils
-from gym_flowers.envs.robotics import multi_task_fetch_arm_v0, multi_task_fetch_arm_v1, multi_task_fetch_arm_v2, multi_task_fetch_arm_v3, multi_task_fetch_arm_v4, multi_task_fetch_arm_v5
+from gym_flowers.envs.robotics import multi_task_fetch_arm_v0, multi_task_fetch_arm_v1, multi_task_fetch_arm_v2, \
+    multi_task_fetch_arm_v3, multi_task_fetch_arm_v4, multi_task_fetch_arm_v5, multi_task_fetch_arm_nlp
 
 
 class MultiTaskFetchArmV0(multi_task_fetch_arm_v0.MultiTaskFetchArmV0, utils.EzPickle):
@@ -103,5 +104,18 @@ class MultiTaskFetchArmV5(multi_task_fetch_arm_v5.MultiTaskFetchArmV5, utils.EzP
         utils.EzPickle.__init__(self)
 
 
+class MultiTaskFetchArmNLP(multi_task_fetch_arm_nlp.MultiTaskFetchArmNLP, utils.EzPickle):
+    def __init__(self, target_range=1):
+        initial_qpos = {
+            'robot0:slide0': 0.405,
+            'robot0:slide1': 0.48,
+            'robot0:slide2': 0.0,
+        }
+        for i in range(3):
+            initial_qpos['object'+str(i)+':joint'] = [1.25, 0.53, 0.45, 1., 0., 0., 0.]
+        multi_task_fetch_arm_nlp.MultiTaskFetchArmNLP.__init__(
+            self, 'fetch/multi_task_fetch_arm.xml', n_substeps=20, gripper_extra_height=0.2,
+            obj_range=0.25, initial_qpos=initial_qpos)
+        utils.EzPickle.__init__(self)
 
 
