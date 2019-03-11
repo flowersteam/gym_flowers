@@ -80,6 +80,12 @@ for target_range in [1, 2, 3, 5, 10]:
             max_episode_steps=50,
         )
 
+register(
+    id='MultiTaskFetchArm-v6',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmV6',
+    max_episode_steps=50,
+)
+
 
 register(
     id='MultiTaskFetchArmNLP-v0',
