@@ -61,10 +61,9 @@ class MultiTaskFetchArmV6(multi_task_robot_env.MultiTaskRobotEnv):
 
         self.tasks = tasks
         self.n_tasks = len(self.tasks)
-        self.n_distractors = self.n_tasks - 4
         # indices of relevant object position (achieved_goal)
         # the achieved goal for the stacking task (T3) contains the gripper coordinate, as it is necessary to compute the reward (has to be far from the goal)
-        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [9, 10, 11], [12, 13, 14], [15, 16, 17],  [9, 10, 11], [12, 13, 14], [15, 16, 17]]
+        self.tasks_obs_id = [[0, 1, 2], [3, 4, 5], [3, 4, 5], [3, 4, 5, 0, 1, 2], [6, 7, 8], [9, 10, 11], [12, 13, 14],  [6, 7, 8], [9, 10, 11], [12, 13, 14]]
 
         dim_tasks_g = [3] * self.n_tasks
         ind_g = 0
@@ -130,7 +129,7 @@ class MultiTaskFetchArmV6(multi_task_robot_env.MultiTaskRobotEnv):
                 # find current task
                 task = np.argwhere(task_descr[i_g] == 1)[0][0]
 
-                if task in [0, 1, 2, 4, 5, 6, 7, 8, 9, 10]:
+                if task in [0, 1, 2, 4, 5, 6, 7, 8, 9]:
 
                     # Compute distance between goal and the achieved goal.
                     d = goal_distance(achieved_goal[i_g, self.tasks_ag_id[task]], goal[i_g, self.tasks_g_id[task]])
