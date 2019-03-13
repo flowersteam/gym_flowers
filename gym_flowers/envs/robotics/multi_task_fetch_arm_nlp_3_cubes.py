@@ -90,14 +90,25 @@ class MultiTaskFetchArmNLP(simple_multi_task_robot_env.SimpleMultiTaskRobotEnv):
         object1_rel_pos = object1_pos - grip_pos
         object1_velp -= grip_velp
 
+        # object 2
+        object2_pos = self.sim.data.get_site_xpos('object2')
+        # rotations
+        object2_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object2'))
+        # velocities
+        object2_velp = self.sim.data.get_site_xvelp('object2') * dt
+        object2_velr = self.sim.data.get_site_xvelr('object2') * dt
+        # gripper state
+        object2_rel_pos = object2_pos - grip_pos
+        object2_velp -= grip_velp
+
         gripper_state = robot_qpos[-2:]
         gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
         obs = np.concatenate([grip_pos,
-                              object0_pos.ravel(), object1_pos.ravel(),
-                              object0_rel_pos.ravel(), object1_rel_pos.ravel(),
-                              object0_rot.ravel(), object1_rot.ravel(),
-                              object0_velp.ravel(), object1_velp.ravel(),
-                              object0_velr.ravel(), object1_velr.ravel(),
+                              object0_pos.ravel(), object1_pos.ravel(), object2_pos.ravel(),
+                              object0_rel_pos.ravel(), object1_rel_pos.ravel(), object2_rel_pos.ravel(),
+                              object0_rot.ravel(), object1_rot.ravel(), object2_rot.ravel(),
+                              object0_velp.ravel(), object1_velp.ravel(), object2_velp.ravel(),
+                              object0_velr.ravel(), object1_velr.ravel(), object2_velr.ravel(),
                               grip_velp, gripper_vel, gripper_state])
 
         if self.first_obs is None:
@@ -127,6 +138,7 @@ class MultiTaskFetchArmNLP(simple_multi_task_robot_env.SimpleMultiTaskRobotEnv):
         # Randomize start position of object.
         object0_xpos = self.initial_gripper_xpos[:2]
         object1_xpos = self.initial_gripper_xpos[:2]
+        object2_xpos = self.initial_gripper_xpos[:2]
 
         while np.linalg.norm(object0_xpos - self.initial_gripper_xpos[:2]) < 0.1:
             object0_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
@@ -134,21 +146,30 @@ class MultiTaskFetchArmNLP(simple_multi_task_robot_env.SimpleMultiTaskRobotEnv):
         while np.linalg.norm(object1_xpos - self.initial_gripper_xpos[:2]) < 0.1 or np.linalg.norm(object1_xpos - object0_xpos) < 0.1:
             object1_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
 
+        while np.linalg.norm(object2_xpos - self.initial_gripper_xpos[:2]) < 0.1 or np.linalg.norm(object2_xpos - object0_xpos) < 0.1 or \
+            np.linalg.norm(object1_xpos - object2_xpos) < 0.1:
+            object2_xpos = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
 
         object0_qpos = self.sim.data.get_joint_qpos('object0:joint')
         object1_qpos = self.sim.data.get_joint_qpos('object1:joint')
+        object2_qpos = self.sim.data.get_joint_qpos('object2:joint')
 
         assert object0_qpos.shape == (7,)
         assert object1_qpos.shape == (7,)
+        assert object2_qpos.shape == (7,)
         object0_qpos[:2] = object0_xpos
         object1_qpos[:2] = object1_xpos
+        object2_qpos[:2] = object2_xpos
         object0_qpos[-3:] = 0
         object1_qpos[-3:] = 0
+        object2_qpos[-3:] = 0
         object0_qpos[2] = self.height_offset
         object1_qpos[2] = self.height_offset
+        object2_qpos[2] = self.height_offset
 
         self.sim.data.set_joint_qpos('object0:joint', object0_qpos)
         self.sim.data.set_joint_qpos('object1:joint', object1_qpos)
+        self.sim.data.set_joint_qpos('object2:joint', object2_qpos)
 
         self.sim.forward()
         return True
