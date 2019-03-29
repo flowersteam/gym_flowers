@@ -93,6 +93,12 @@ register(
     max_episode_steps=50,
 )
 
+register(
+    id='MultiTaskFetchArmNLP1-v0',
+    entry_point='gym_flowers.envs.robotics:MultiTaskFetchArmNLP1',
+    max_episode_steps=50,
+)
+
 for n_rooms in range(1, 6):
     suffix = str(n_rooms)
     kwargs = {'nb_rooms': n_rooms}
